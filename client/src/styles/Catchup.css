@@ -1,0 +1,75 @@
+.meet-container {
+    width: 90%;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    margin-top: 30px;
+  }
+  
+  .meet-container .left-container {
+    width: 50%;
+    padding: 10px;
+    top: 40%;
+  }
+  
+  .meet-container .right-container {
+    width: 30%;
+    height: 75vh;
+    padding: 10px;
+    border-radius: 15px;
+    background-color: white;
+    box-shadow: -8px 0 8px rgba(104, 42, 213, 0.4),
+                8px 0 8px rgba(104, 42, 213, 0.4),
+                0 -8px 8px rgba(104, 42, 213, 0.4),
+                0 8px 8px rgba(104, 42, 213, 0.4);
+  }
+  
+  .meet-container .left-container .meeting-btn {
+    display: flex;
+    margin: 5px 10px;
+    margin-left: auto;
+    position: absolute;
+    top: 60%;
+    left: 15%;
+  }
+  
+  .meeting-btn .blank-button {
+    background-color: transparent;
+    border: 2px solid #682ad5;
+    color: #ffffff;
+    padding: 12px 24px;
+    border-radius: 20px;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border 0.2s ease;
+    margin-right: 20px;
+    align-items: center;
+  }
+  
+  .meeting-btn .blank-button .plus-sign{
+      font-size: 20px;
+  }
+  
+  .meeting-btn .blank-button:hover {
+    background-color: #5616c3;
+    border: 2px solid #5616c3;
+  }
+  
+  .meeting-btn .filled-button {
+    background-color: #682ad5;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 20px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 20px;
+    align-items: center;
+  }
+  
+  .meeting-btn .filled-button:hover {
+    background-color: #5616c3;
+  }
+  
