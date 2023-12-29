@@ -1,5 +1,6 @@
 package com.signallingBeta.signallingBeta.controller;
 
+import com.signallingBeta.signallingBeta.dto.SimpleInfoExchangeMessage;
 import com.signallingBeta.signallingBeta.model.SimpleMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
@@ -39,8 +40,8 @@ public class WebSocketController {
 
     @MessageMapping("/application")
     @SendTo("/all/messages")
-    public SimpleMessage send(final SimpleMessage simpleMessage) throws Exception {
-        return simpleMessage;
+    public SimpleInfoExchangeMessage send(final SimpleInfoExchangeMessage simpleInfoExchangeMessage) throws Exception {
+        return simpleInfoExchangeMessage;
     }
 
     @MessageMapping("/private-message")
