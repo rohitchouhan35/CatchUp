@@ -16,7 +16,11 @@ const users = [
 ];
 
 const Lobby = () => {
-  const [isChatSectionOPen, setIsChatSectionOPen] = useState(true);
+  const [isChatSectionOPen, setIsChatSectionOPen] = useState(false);
+
+  const hadnleChatButtonClick = () => {
+    setIsChatSectionOPen(!isChatSectionOPen);
+  }
   return (
     <div className="lobby">
       <div className="lobby-container">
@@ -30,6 +34,22 @@ const Lobby = () => {
             </div>
           ))}
         </div>
+        {isChatSectionOPen && (
+          <div className="chat-container">
+          <p class="message-section-info">These messages are visible to everyone</p>
+            <div className="chat-messages">
+              {/* Chat messages go here */}
+              <div className="message">
+                {/* <span className="username">Rohit:</span> Hello! */}
+              </div>
+              {/* Add more messages as needed */}
+            </div>
+            <div className="chat-input-container">
+              <input type="text" placeholder="Type your message..." />
+              <button className="send-button">Send</button>
+            </div>
+          </div>
+        )}
       </div>
       <div className="control-container">
         <button className="control-btn">
@@ -41,7 +61,7 @@ const Lobby = () => {
         <button className="control-btn">
           <FaLaptop />
         </button>
-        <button className="control-btn">
+        <button className="control-btn" onClick={hadnleChatButtonClick}>
           <FaRocketchat />
         </button>
         <button className="control-btn control-btn-cut">
