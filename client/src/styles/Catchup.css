@@ -31,14 +31,15 @@
     position: absolute;
     top: 60%;
     left: 15%;
+    align-items: center;
+    justify-content: center;
   }
   
   .meeting-btn .blank-button {
     background-color: transparent;
     border: 2px solid #682ad5;
     color: #ffffff;
-    padding: 12px 24px;
-    border-radius: 20px;
+    padding: 18px 24px;
     font-size: 20px;
     font-weight: 600;
     cursor: pointer;
@@ -72,4 +73,21 @@
   .meeting-btn .filled-button:hover {
     background-color: #5616c3;
   }
-  
+
+  .meeting-btn .text-button {
+    cursor: pointer;
+    font-size: 22px;
+    padding: 0px 16px;
+    font-weight: 5000;
+  }
+
+  .roomId-input-box input {
+    background-color: transparent;
+    border: 2px solid #682ad5;
+    color: #ffffff;
+    padding: 18px 30px;
+    font-size: 20px;
+    border-radius: 6px;
+    height: 82%;
+    transition: border 0.2s ease;
+  }

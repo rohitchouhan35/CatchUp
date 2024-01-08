@@ -21,8 +21,8 @@ const Catchup = () => {
   // will be used to check condition for broadcasting it's offer to other user
   const [isClientReady, setIsClientReady] = useState(false);
 
-  // id of current meeting
-  const [currentMeetingID, setCurrentMeetingID] = useState(null);
+  // id of current room (can be own or received)
+  const [currentRoomID, setCurrentRoomID] = useState("");
 
   // identifies each user uniquely
   const [userID, setUserID] = useState(null);
@@ -151,6 +151,10 @@ const Catchup = () => {
   };
 
   async function handleStartMeeting() {
+
+    const myRoomId = uuidv4();
+    setCurrentRoomID(myRoomId);
+
     var startMessage = {
       content: "offer",
       userID: userID,
@@ -165,6 +169,13 @@ const Catchup = () => {
   }
 
   async function handleJoinMeeting() {
+
+    if(currentRoomID != "" && currentRoomID.length > 0) {
+      // subscribe to this room
+    } else {
+      return;
+    }
+
     var joinMessage = {
       content: "readySignal",
       userID: userID,
@@ -173,6 +184,10 @@ const Catchup = () => {
     const jsonStringMessage = JSON.stringify(joinMessage);
     handlePublishMessage("/app/application", jsonStringMessage);
   }
+
+  const handleRoomIDInputChange = (event) => {
+    setCurrentRoomID(event.target.value);
+  };
 
   if (!stompClient) {
     return <ConnectingPageComponent />;
@@ -186,9 +201,24 @@ const Catchup = () => {
             <button className="blank-button" onClick={handleStartMeeting}>
               <span className="plus-sign">+ </span>Start Meeting
             </button>
-            <button className="filled-button" onClick={handleJoinMeeting}>
+            <div className="roomId-input-box">
+              <input
+                  type="text"
+                  placeholder="Enter a code or link"
+                  value={currentRoomID}
+                  onChange={handleRoomIDInputChange}
+                />
+            </div>
+            {/* filled-button */}
+            {/* <button className="text-button" onClick={handleJoinMeeting}>
               Join Meeting
-            </button>
+            </button> */}
+            <div className="text-button" onClick={handleJoinMeeting} 
+              style={{
+                color: currentRoomID.length > 0 ? 'white' : '#757575',
+                cursor: currentRoomID.length > 0 ? 'pointer' : 'not-allowed',
+              }}
+            >Join</div>
           </div>
         </div>
       </div>
