@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import MessageViewComponent from "./MessageViewComponent";
 import { v4 as uuidv4 } from 'uuid';
 import "../styles/Lobby.css";
@@ -8,6 +8,7 @@ const ChatBox = ({
 }) => {
 
     const [inputMessage, setInputMessage] = useState("");
+    const messagesContainerRef = useRef(null);
 
     const handleMessageSend = () => {
         if (inputMessage.trim() === "") {
@@ -34,12 +35,18 @@ const ChatBox = ({
         setInputMessage(event.target.value);
       };
 
+      useEffect(() => {
+        if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, [messages]);
+
   return (
     <div className="chat-container">
       <p className="message-section-info">
         These messages are visible to everyone
       </p>
-      <div className="chat-messages">
+      <div ref={messagesContainerRef} className="chat-messages">
         {messages.map((message) => (
           <div key={message.id} className="message">
             {message.type === "message" && (
