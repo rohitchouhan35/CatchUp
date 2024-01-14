@@ -9,7 +9,12 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SimpleMessage {
 
-    private String text;
-    private String sendTo;
+    private String userID;
+    private String type;
+    private String content;
+    private String receiverID = null;
+    private boolean isPrivate = false;
+    private String roomID = null;
+    private String destination = null;
 
 }

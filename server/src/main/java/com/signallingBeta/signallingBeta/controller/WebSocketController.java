@@ -25,28 +25,17 @@ public class WebSocketController {
         this.messagingTemplate = messagingTemplate;
     }
 
-    @MessageMapping("/sendPrivateMessage/{targetUserId}")
-    public void sendPrivateMessage(String message, SimpMessageHeaderAccessor headerAccessor, @DestinationVariable String targetUserId) {
-        String senderUsername = "senderUserName";
-        String destination = "/user/" + targetUserId + "/private";
-        messagingTemplate.convertAndSendToUser(targetUserId, destination, "Private message from " + senderUsername + ": " + message);
-    }
-
-    @MessageMapping("/sendToRoom/{roomName}")
-    public void sendToRoom(String message, SimpMessageHeaderAccessor headerAccessor, @DestinationVariable String roomName) {
-        String messageToSend = "Hi! this message is generated for room: " + roomName + " with message: " + message;
-        messagingTemplate.convertAndSend("/topic/" + roomName, messageToSend);
-    }
-
-    @MessageMapping("/application")
-    @SendTo("/all/messages")
+    @MessageMapping("/room")
+    @SendTo("/room/messages")
     public SimpleInfoExchangeMessage send(final SimpleInfoExchangeMessage simpleInfoExchangeMessage) throws Exception {
         return simpleInfoExchangeMessage;
     }
 
+//    @MessageMapping("/room")
+//    @SendTo("/room/messages")
     @MessageMapping("/private-message")
     public SimpleMessage recMessage(@Payload SimpleMessage message) {
-        messagingTemplate.convertAndSendToUser(message.getSendTo(),"/private",message);
+        messagingTemplate.convertAndSendToUser(message.getReceiverID(),"/private",message);
         System.out.println(message.toString());
         return message;
     }
