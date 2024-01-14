@@ -5,6 +5,13 @@
   width: 95vw;
 }
 
+.user-view {
+  flex-wrap: nowrap;
+  justify-content: space-around;
+  gap: 50px; 
+  width: 100%;
+}
+
 .video-container {
   display: flex;
   flex-wrap: nowrap;
@@ -90,6 +97,7 @@
   display: flex;
   flex-direction: column;
   background-color: #2C2D2E;
+  /* padding: 10px; */
   border-radius: 2%;
   margin: 10px;
   width: 30%;
@@ -128,6 +136,11 @@ input {
   border: none;
   border-radius: 5px;
   margin-right: 10px;
+  height: 100%;
+}
+
+input:focus{
+  border: none;
 }
 
 .send-button {
@@ -144,6 +157,7 @@ input {
   font-size: 16px; /* Adjust the font size as needed */
   font-weight: 1;
   margin-bottom: 10px; /* Add margin for spacing */
+  padding-left: 10px;
 }
 
 .message-section-info::after {
@@ -151,6 +165,50 @@ input {
   display: block;
   width: 100%;
   height: 1px;
-  background-color: #ccc; /* Adjust the color of the horizontal line */
-  margin-top: 5px; /* Adjust the margin to control the distance between text and line */
+  background-color: #ccc;
+  margin-top: 5px;
+}
+
+.user-view {
+  position: relative;
+}
+
+.message-container {
+  display: flex;
+  width: fit-content;
+  position: relative;
+  align-items: center;
+  justify-content: space-around;
+  top: -60px;
+  padding: 10px;
+}
+
+.message-text {
+  color: #ddd;
+  border-radius: 5px;
+  border: 1px solid #2e39fcaa;
+  padding: 10px;
+  margin-right: 20px;
+}
+
+.copy-icon {
+  border-radius: 5px;
+  cursor: pointer;
+  color: #ddd;
+  border: 1px solid #2e39fcaa;
+  padding: 10px;
+  transition: 0.1s;
+}
+
+.copy-icon:hover {
+  scale: 1.05;
+  color: #2e39fcaa;
+}
+
+.below-text {
+  font-size: 14px;
+  position: relative;
+  top: -60px;
+  float: left;
+  padding-left: 20px;
 }

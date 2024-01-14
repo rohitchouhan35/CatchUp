@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import StompConnection from "../config/Config.jsx";
+import Lobby from "../components/Lobby.jsx";
 import Utilities from "../utilities/Utilities";
 import ConnectingPageComponent from "../components/ConnectingPageComponent";
 import "../styles/Catchup.css";
@@ -9,13 +10,15 @@ const Catchup = () => {
   const [stompConnection, setStompConnection] = useState(null);
   const [subscribeFlag, setSubscribeFlag] = useState(false);
   const [receivedMessages, setReceivedMessages] = useState([]);
-  const [message, setMessage] = useState("");
+  const [messages, setMessages] = useState([]);
   const [offer, setOffer] = useState(null);
   const [answer, setAnswer] = useState(null);
   const [isOfferReady, setIsOfferReady] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
   const [currentRoomID, setCurrentRoomID] = useState("");
   const [userID, setUserID] = useState(null);
+  const [amIOnline, setAmIOnline] = useState(false);
+  const [launchRoom, setLaunchRoom] = useState(false);
 
   useEffect(() => {
     const userUUID = Utilities.generateUUID();
@@ -24,7 +27,8 @@ const Catchup = () => {
     console.log("Initialize stomp connection...");
 
     const connection = new StompConnection(
-      "wss://catchup-media-server.onrender.com/meet",
+      // "wss://catchup-media-server.onrender.com/meet",
+      "ws://localhost:8080/meet",
       handleStompConnect
     );
     setStompConnection(connection);
@@ -53,9 +57,15 @@ const Catchup = () => {
     }
   }, [isOfferReady, isClientReady]);
 
+  useEffect(() => {
+    if (amIOnline) {
+      setLaunchRoom(true);
+    }
+  }, [amIOnline]);
+
   function sendOfferToClient() {
     if (!isClientReady || !isOfferReady) return;
-    stompConnection.publish("/app/application", offer);
+    stompConnection.publish("/app/room", offer);
   }
 
   function handleStompConnect(frame) {
@@ -79,15 +89,17 @@ const Catchup = () => {
   }
 
   const subscriptionHandler = () => {
-    const lobbyTopic = "/all/messages";
+    const lobbyTopic = "/room/messages";
     handleSubscription({
       topic: lobbyTopic,
       onMessage: (message) => {
         setReceivedMessages((prevMessages) => [...prevMessages, message.body]);
         const response = Utilities.parseJSON(message);
+        handleReceivedMessage(response);
 
         if (response.userID === userID) {
           console.log("This is your message..");
+          setAmIOnline(true);
         }
 
         if (response.userID !== userID && response.content === "readySignal") {
@@ -97,22 +109,22 @@ const Catchup = () => {
     });
   };
 
-  // const handleSendMessage = () => {
-  //   handlePublishMessage("/app/application", message);
-  //   setMessage("");
-  // };
-
   const handleStartMeeting = () => {
     const myRoomId = Utilities.generateUUID();
     setCurrentRoomID(myRoomId);
 
     var startMessage = {
-      content: "offer",
       userID: userID,
-      value: offer,
+      type: "offer",
+      content: offer,
+      receiverID: null,
+      isPrivate: null,
+      roomID: myRoomId,
+      destination: null
     };
     const jsonStringMessage = JSON.stringify(startMessage);
     setOffer(jsonStringMessage);
+    handlePublishMessage("/app/room", jsonStringMessage);
 
     setIsOfferReady(true);
   };
@@ -125,12 +137,21 @@ const Catchup = () => {
     }
 
     var joinMessage = {
-      content: "readySignal",
       userID: userID,
-      value: null,
+      type: "readySignal",
+      content: null,
+      receiverID: null,
+      isPrivate: null,
+      roomID: null,
+      destination: null
     };
     const jsonStringMessage = JSON.stringify(joinMessage);
-    handlePublishMessage("/app/application", jsonStringMessage);
+    handlePublishMessage("/app/room", jsonStringMessage);
+  };
+
+  const handleReceivedMessage = (message) => {
+    setMessages((prevMessages) => [...prevMessages, message]);
+    console.log('Received message in parent:', message);
   };
 
   const handleRoomIDInputChange = (event) => {
@@ -139,6 +160,10 @@ const Catchup = () => {
 
   if (!stompConnection) {
     return <ConnectingPageComponent />;
+  }
+
+  if(launchRoom) {
+    return <Lobby userID={userID} messages={messages} setMessages={setMessages} handlePublishMessage={handlePublishMessage} handleReceivedMessage={handleReceivedMessage} />;
   }
 
   return (
