@@ -47,7 +47,7 @@ const ChatBox = ({
         These messages are visible to everyone
       </p>
       <div ref={messagesContainerRef} className="chat-messages">
-        {messages.map((message) => (
+        {messages && messages.map((message) => (
           <div key={message.id} className="message">
             {message.type === "message" && (
               <MessageViewComponent message={message.content} mine={message.userID === userID} />
