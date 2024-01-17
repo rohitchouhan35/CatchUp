@@ -16,6 +16,7 @@ const Catchup = () => {
   const [isOfferReady, setIsOfferReady] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
   const [currentRoomID, setCurrentRoomID] = useState("");
+  const [remoteRoomID, setRemoteRoomID] = useState("");
   const [userID, setUserID] = useState(null);
   const [amIOnline, setAmIOnline] = useState(false);
   const [launchRoom, setLaunchRoom] = useState(false);
@@ -28,8 +29,8 @@ const Catchup = () => {
 
     const connection = new StompConnection(
       // "wss://catchup-media-server.onrender.com/meet",
-      "wss://catchup-media-server-beta.onrender.com/meet",
-      // "ws://localhost:8080/meet",
+      // "wss://catchup-media-server-beta.onrender.com/meet",
+      "ws://localhost:8080/meet",
       handleStompConnect
     );
     setStompConnection(connection);
@@ -156,7 +157,7 @@ const Catchup = () => {
   };
 
   const handleRoomIDInputChange = (event) => {
-    setCurrentRoomID(event.target.value);
+    setRemoteRoomID(event.target.value);
   };
 
   if (!stompConnection) {
@@ -179,7 +180,7 @@ const Catchup = () => {
               <input
                   type="text"
                   placeholder="Enter a code or link"
-                  value={currentRoomID}
+                  value={remoteRoomID}
                   onChange={handleRoomIDInputChange}
                 />
             </div>
@@ -187,8 +188,8 @@ const Catchup = () => {
               className="text-button"
               onClick={handleJoinMeeting}
               style={{
-                color: currentRoomID.length > 0 ? "white" : "#757575",
-                cursor: currentRoomID.length > 0 ? "pointer" : "not-allowed",
+                color: remoteRoomID.length > 0 ? "white" : "#757575",
+                cursor: remoteRoomID.length > 0 ? "pointer" : "not-allowed",
               }}
             >
               Join
