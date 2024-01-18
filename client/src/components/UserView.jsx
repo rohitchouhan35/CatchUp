@@ -1,6 +1,7 @@
 import React from "react";
 import Avatars from "./Avatars";
 import { FaCopy } from "react-icons/fa";
+import CopyText from "./CopyText";
 import "../styles/Lobby.css";
 
 const UserView = ({
@@ -10,24 +11,11 @@ const UserView = ({
     { id: 1, username: "Rohit Chouhan" },
     { id: 2, username: "Siddharth Gohil" },
   ];
-
-  const handleCopyClick = () => {
-    navigator.clipboard.writeText(copyMessage);
-    alert("Room ID copied to clipboard!");
-  };
-
+  
   return (
     <>
         <div className="user-view">
-        <div className="helper">
-          <div className="message-container">
-            <div className="message-text">{copyMessage}</div>
-            <div onClick={handleCopyClick} className="copy-icon">
-                <FaCopy />
-            </div>
-          </div>
-          {/* <div className="below-text">Copy and Share</div> */}
-        </div>
+        <CopyText copyMessage={copyMessage} />
         <div className="video-container">
         {users.map((user) => (
             <div key={user.id} className="user-card">
