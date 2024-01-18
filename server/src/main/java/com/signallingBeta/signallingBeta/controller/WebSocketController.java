@@ -2,6 +2,8 @@ package com.signallingBeta.signallingBeta.controller;
 
 import com.signallingBeta.signallingBeta.dto.SimpleInfoExchangeMessage;
 import com.signallingBeta.signallingBeta.model.SimpleMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -16,7 +18,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @CrossOrigin("*")
 @RequestMapping("/")
 @Controller
+//room -> user
 public class WebSocketController {
+
+    private static final Logger logger = LoggerFactory.getLogger(WebSocketController.class);
 
     @Autowired
     private final SimpMessagingTemplate messagingTemplate;
@@ -27,21 +32,18 @@ public class WebSocketController {
 
     @MessageMapping("/room")
     @SendTo("/room/messages")
-    public SimpleInfoExchangeMessage send(final SimpleInfoExchangeMessage simpleInfoExchangeMessage) throws Exception {
-        return simpleInfoExchangeMessage;
+    public SimpleMessage send(final SimpleMessage simpleMessage) throws Exception {
+        return simpleMessage;
     }
 
-//    @MessageMapping("/room")
-//    @SendTo("/room/messages")
-    @MessageMapping("/private-message")
+    @MessageMapping("/private")
     public SimpleMessage recMessage(@Payload SimpleMessage message) {
-        messagingTemplate.convertAndSendToUser(message.getReceiverID(),"/private",message);
-        System.out.println(message.toString());
+        messagingTemplate.convertAndSendToUser(message.getReceiverID(),"/private", message);
         return message;
     }
 
-    @MessageMapping("/welcome")
-    @SendTo("/topic/greetings")
+    @MessageMapping("/room/welcome")
+    @SendTo("/room/greetings")
     public String welcomeMessage() {
         String username = "Sunflower";
         return "Welcome, " + username + "! You are connected.";

@@ -14,7 +14,7 @@ public class SimpleMessage {
     private String content;
     private String receiverID = null;
     private boolean isPrivate = false;
-    private String roomID = null;
+    private String roomID;
     private String destination = null;
 
 }
