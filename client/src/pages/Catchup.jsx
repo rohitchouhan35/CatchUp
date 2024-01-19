@@ -9,12 +9,7 @@ const Catchup = () => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [stompConnection, setStompConnection] = useState(null);
   const [subscribeFlag, setSubscribeFlag] = useState(false);
-  const [receivedMessages, setReceivedMessages] = useState([]);
   const [messages, setMessages] = useState([]);
-  const [offer, setOffer] = useState(null);
-  const [answer, setAnswer] = useState(null);
-  const [isOfferReady, setIsOfferReady] = useState(false);
-  const [isClientReady, setIsClientReady] = useState(false);
   const [currentRoomID, setCurrentRoomID] = useState("");
   const [remoteRoomID, setRemoteRoomID] = useState("");
   const [userID, setUserID] = useState(null);
@@ -49,26 +44,11 @@ const Catchup = () => {
   }, [subscribeFlag]);
 
   useEffect(() => {
-    if (isOfferReady && isClientReady) {
-      console.log("Preparing to send offer...");
-      sendOfferToClient();
-    } else {
-      console.log("isOfferReady",isOfferReady);
-      console.log("isClientReady",isClientReady);
-      console.log("Either client or offer is not ready");
-    }
-  }, [isOfferReady, isClientReady]);
-
-  useEffect(() => {
     if (amIOnline) {
       setLaunchRoom(true);
     }
   }, [amIOnline]);
 
-  function sendOfferToClient() {
-    if (!isClientReady || !isOfferReady) return;
-    stompConnection.publish("/app/room", offer);
-  }
 
   function handleStompConnect(frame) {
     console.log("Entered onconnect");
@@ -91,44 +71,38 @@ const Catchup = () => {
   }
 
   const subscriptionHandler = () => {
-    const lobbyTopic = "/room/messages";
+
+    const lobbyTopicForConnectionCheck = "/connection/check";
     handleSubscription({
-      topic: lobbyTopic,
+      topic: lobbyTopicForConnectionCheck,
       onMessage: (message) => {
-        setReceivedMessages((prevMessages) => [...prevMessages, message.body]);
         const response = Utilities.parseJSON(message);
-        handleReceivedMessage(response);
+
+        console.log("message from connection check: ", response);
 
         if (response.userID === userID) {
           console.log("This is your message..");
           setAmIOnline(true);
         }
-
-        if (response.userID !== userID && response.content === "readySignal") {
-          setIsClientReady(true);
-        }
       },
     });
+  };
+
+  const handleReceivedMessage = (message) => {
+    setMessages((prevMessages) => [...prevMessages, message]);
+    console.log('Received message in parent:', message);
   };
 
   const handleStartMeeting = () => {
     const myRoomId = Utilities.generateUUID();
     setCurrentRoomID(myRoomId);
 
-    var startMessage = {
+    var connectionCheckMessage = {
       userID: userID,
-      type: "offer",
-      content: offer,
-      receiverID: null,
-      isPrivate: null,
-      roomID: myRoomId,
-      destination: null
+      type: "connectionCheck"
     };
-    const jsonStringMessage = JSON.stringify(startMessage);
-    setOffer(jsonStringMessage);
-    handlePublishMessage("/app/room", jsonStringMessage);
-
-    setIsOfferReady(true);
+    const jsonStringMessage = JSON.stringify(connectionCheckMessage);
+    handlePublishMessage("/app/connection", jsonStringMessage);
   };
 
   const handleJoinMeeting = () => {
@@ -151,16 +125,11 @@ const Catchup = () => {
     handlePublishMessage("/app/room", jsonStringMessage);
   };
 
-  const handleReceivedMessage = (message) => {
-    setMessages((prevMessages) => [...prevMessages, message]);
-    console.log('Received message in parent:', message);
-  };
-
   const handleRoomIDInputChange = (event) => {
     setRemoteRoomID(event.target.value);
   };
 
-  if (!stompConnection) {
+  if (!subscribeFlag) {
     return <ConnectingPageComponent />;
   }
 

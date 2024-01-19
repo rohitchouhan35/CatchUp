@@ -10,7 +10,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/catchup" element={<Catchup />} />
-          <Route path="/" element={<Lobby />} />
+          <Route path="/" element={<Catchup />} />
           <Route path="/chat" element={<PrivateChatBox />} />
         </Routes>
       </Router>
