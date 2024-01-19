@@ -1,5 +1,6 @@
 package com.signallingBeta.signallingBeta.controller;
 
+import com.signallingBeta.signallingBeta.dto.ConnectionCheckMessage;
 import com.signallingBeta.signallingBeta.dto.SimpleInfoExchangeMessage;
 import com.signallingBeta.signallingBeta.model.SimpleMessage;
 import org.slf4j.Logger;
@@ -34,6 +35,14 @@ public class WebSocketController {
     @SendTo("/room/messages")
     public SimpleMessage send(final SimpleMessage simpleMessage) throws Exception {
         return simpleMessage;
+    }
+
+    @MessageMapping("/connection")
+    @SendTo("/connection/check")
+    public ConnectionCheckMessage checkClientServerConnection(final ConnectionCheckMessage connectionCheckMessage) throws Exception {
+        logger.info("message received for connection check...");
+        System.out.println(connectionCheckMessage.toString());
+        return connectionCheckMessage;
     }
 
     @MessageMapping("/private")
