@@ -3,12 +3,25 @@ import UserView from "./UserView";
 import ChatBox from "./ChatBox";
 import ControlsView from "./ControlsView";
 import { ChatProvider } from "../contexts/ChatContext";
+import Utilities from "../utilities/Utilities";
 
 import "../styles/Lobby.css";
 
-const Lobby = () => {
+const Lobby = ({ remoteRoomID }) => {
   const [isChatSectionOpen, setIsChatSectionOpen] = useState(false);
-  const [lobbyID, setLobbyID] = useState("65sdfsdf55-sdfd-fsdfsdfdsf");
+  const [lobbyID, setLobbyID] = useState(null);
+
+  useEffect(() => {
+    if(!remoteRoomID && !lobbyID) {
+      console.log("remote room ID is: ", remoteRoomID);
+      const randomUUID = Utilities.generateUUID();
+      setLobbyID(randomUUID);
+    } else {
+      console.log("You are joinig some room");
+      setLobbyID(remoteRoomID);
+    }
+  }, []);
+  
 
   const handleChatButtonClick = () => {
     setIsChatSectionOpen(!isChatSectionOpen);

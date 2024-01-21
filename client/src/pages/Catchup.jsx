@@ -106,8 +106,12 @@ const Catchup = () => {
   };
 
   const handleJoinMeeting = () => {
-    if (currentRoomID !== "" && currentRoomID.length > 0) {
-      // subscribe to this room
+    if (remoteRoomID !== "" && remoteRoomID.length > 0) {
+      
+      console.log("You are joining to a room");
+      // actually check for online presence and other stuff as well
+      setAmIOnline(true);
+
     } else {
       return;
     }
@@ -134,7 +138,7 @@ const Catchup = () => {
   }
 
   if(launchRoom) {
-    return <Lobby userID={userID} messages={messages} setMessages={setMessages} handlePublishMessage={handlePublishMessage} handleReceivedMessage={handleReceivedMessage} />;
+    return <Lobby remoteRoomID={remoteRoomID} />;
   }
 
   return (
