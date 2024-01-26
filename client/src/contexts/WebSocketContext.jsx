@@ -79,7 +79,7 @@ export const useWebSocket = () => {
 
 //   useEffect(() => {
 //     console.log("ChatBox initialize stomp connection...");
-//     const userUUID = Utilities.generateUUID();
+//     const userUUID = Utilities.getUniqueID();
 //     setUserID(userUUID);
 
 //     activateConnection(handleStompConnect);

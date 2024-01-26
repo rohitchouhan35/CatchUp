@@ -14,8 +14,9 @@ const Lobby = ({ remoteRoomID }) => {
   useEffect(() => {
     if(!remoteRoomID && !lobbyID) {
       console.log("remote room ID is: ", remoteRoomID);
-      const randomUUID = Utilities.generateUUID();
+      const randomUUID = Utilities.getUniqueID();
       setLobbyID(randomUUID);
+      // save this ID so that only server generated ID's are allowed
     } else {
       console.log("You are joinig some room");
       setLobbyID(remoteRoomID);

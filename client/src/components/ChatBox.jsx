@@ -16,7 +16,7 @@ const ChatBox = ({ chatSessionID }) => {
 
   useEffect(() => {
     console.log("ChatBox initialize stomp connection...");
-    const userUUID = Utilities.generateUUID();
+    const userUUID = Utilities.getUniqueID();
     setUserID(userUUID);
     const connection = new StompConnection(
       // "wss://catchup-media-server.onrender.com/meet",

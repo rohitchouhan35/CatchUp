@@ -17,7 +17,7 @@ const Catchup = () => {
   const [launchRoom, setLaunchRoom] = useState(false);
 
   useEffect(() => {
-    const userUUID = Utilities.generateUUID();
+    const userUUID = Utilities.getUniqueID();
     setUserID(userUUID);
     console.log(userUUID);
     console.log("Initialize stomp connection...");
@@ -94,7 +94,7 @@ const Catchup = () => {
   };
 
   const handleStartMeeting = () => {
-    const myRoomId = Utilities.generateUUID();
+    const myRoomId = Utilities.getUniqueID();
     setCurrentRoomID(myRoomId);
 
     var connectionCheckMessage = {
