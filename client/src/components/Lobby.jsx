@@ -1,75 +1,43 @@
-import React, { useState } from "react";
-import {
-  FaVideo,
-  FaMicrophone,
-  FaLaptop,
-  FaRocketchat,
-  FaPhoneAlt,
-} from "react-icons/fa";
-import Avatars from "./Avatars";
-import { v4 as uuidv4 } from 'uuid';
+import React, { useEffect, useState } from "react";
+import UserView from "./UserView";
+import ChatBox from "./ChatBox";
+import ControlsView from "./ControlsView";
+import { ChatProvider } from "../contexts/ChatContext";
+import Utilities from "../utilities/Utilities";
 
 import "../styles/Lobby.css";
 
-const users = [
-  { id: 1, username: "Rohit Chouhan" },
-  { id: 2, username: "Siddharth Gohil" },
-];
+const Lobby = ({ remoteRoomID }) => {
+  const [isChatSectionOpen, setIsChatSectionOpen] = useState(false);
+  const [lobbyID, setLobbyID] = useState(null);
 
-const Lobby = () => {
-  const [isChatSectionOPen, setIsChatSectionOPen] = useState(false);
+  useEffect(() => {
+    if(!remoteRoomID && !lobbyID) {
+      console.log("remote room ID is: ", remoteRoomID);
+      const randomUUID = Utilities.getUniqueID();
+      setLobbyID(randomUUID);
+      // save this ID so that only server generated ID's are allowed
+    } else {
+      console.log("You are joinig some room");
+      setLobbyID(remoteRoomID);
+    }
+  }, []);
+  
 
-  const hadnleChatButtonClick = () => {
-    setIsChatSectionOPen(!isChatSectionOPen);
-  }
+  const handleChatButtonClick = () => {
+    setIsChatSectionOpen(!isChatSectionOpen);
+  };
+
   return (
-    <div className="lobby">
-      <div className="lobby-container">
-        <div className="video-container">
-          {users.map((user) => (
-            <div key={user.id} className="user-card">
-            <div className="random-avatar">
-              <Avatars />
-            </div>
-              <p>{user.username}</p>
-            </div>
-          ))}
+    <ChatProvider>
+      <div className="lobby">
+        <div className="lobby-container">
+          <UserView copyMessage={lobbyID} />
+          <ChatBox chatSessionID={lobbyID}/>
         </div>
-        {isChatSectionOPen && (
-          <div className="chat-container">
-          <p class="message-section-info">These messages are visible to everyone</p>
-            <div className="chat-messages">
-              {/* Chat messages go here */}
-              <div className="message">
-                {/* <span className="username">Rohit:</span> Hello! */}
-              </div>
-              {/* Add more messages as needed */}
-            </div>
-            <div className="chat-input-container">
-              <input type="text" placeholder="Type your message..." />
-              <button className="send-button">Send</button>
-            </div>
-          </div>
-        )}
+        <ControlsView handleChatButtonClick={handleChatButtonClick} />
       </div>
-      <div className="control-container">
-        <button className="control-btn">
-          <FaMicrophone />
-        </button>
-        <button className="control-btn">
-          <FaVideo />
-        </button>
-        <button className="control-btn">
-          <FaLaptop />
-        </button>
-        <button className="control-btn" onClick={hadnleChatButtonClick}>
-          <FaRocketchat />
-        </button>
-        <button className="control-btn control-btn-cut">
-          <FaPhoneAlt />
-        </button>
-      </div>
-    </div>
+    </ChatProvider>
   );
 };
 

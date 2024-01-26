@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import StompConnection from "../config/Config.jsx";
+import Lobby from "../components/Lobby.jsx";
 import Utilities from "../utilities/Utilities";
 import ConnectingPageComponent from "../components/ConnectingPageComponent";
 import "../styles/Catchup.css";
@@ -8,23 +9,23 @@ const Catchup = () => {
   const [subscriptions, setSubscriptions] = useState([]);
   const [stompConnection, setStompConnection] = useState(null);
   const [subscribeFlag, setSubscribeFlag] = useState(false);
-  const [receivedMessages, setReceivedMessages] = useState([]);
-  const [message, setMessage] = useState("");
-  const [offer, setOffer] = useState(null);
-  const [answer, setAnswer] = useState(null);
-  const [isOfferReady, setIsOfferReady] = useState(false);
-  const [isClientReady, setIsClientReady] = useState(false);
+  const [messages, setMessages] = useState([]);
   const [currentRoomID, setCurrentRoomID] = useState("");
+  const [remoteRoomID, setRemoteRoomID] = useState("");
   const [userID, setUserID] = useState(null);
+  const [amIOnline, setAmIOnline] = useState(false);
+  const [launchRoom, setLaunchRoom] = useState(false);
 
   useEffect(() => {
-    const userUUID = Utilities.generateUUID();
+    const userUUID = Utilities.getUniqueID();
     setUserID(userUUID);
     console.log(userUUID);
     console.log("Initialize stomp connection...");
 
     const connection = new StompConnection(
-      "wss://catchup-media-server.onrender.com/meet",
+      // "wss://catchup-media-server.onrender.com/meet",
+      // "wss://catchup-media-server-beta.onrender.com/meet",
+      "ws://localhost:8080/meet",
       handleStompConnect
     );
     setStompConnection(connection);
@@ -43,20 +44,11 @@ const Catchup = () => {
   }, [subscribeFlag]);
 
   useEffect(() => {
-    if (isOfferReady && isClientReady) {
-      console.log("Preparing to send offer...");
-      sendOfferToClient();
-    } else {
-      console.log("isOfferReady",isOfferReady);
-      console.log("isClientReady",isClientReady);
-      console.log("Either client or offer is not ready");
+    if (amIOnline) {
+      setLaunchRoom(true);
     }
-  }, [isOfferReady, isClientReady]);
+  }, [amIOnline]);
 
-  function sendOfferToClient() {
-    if (!isClientReady || !isOfferReady) return;
-    stompConnection.publish("/app/application", offer);
-  }
 
   function handleStompConnect(frame) {
     console.log("Entered onconnect");
@@ -79,66 +71,74 @@ const Catchup = () => {
   }
 
   const subscriptionHandler = () => {
-    const lobbyTopic = "/all/messages";
+
+    const lobbyTopicForConnectionCheck = "/connection/check";
     handleSubscription({
-      topic: lobbyTopic,
+      topic: lobbyTopicForConnectionCheck,
       onMessage: (message) => {
-        setReceivedMessages((prevMessages) => [...prevMessages, message.body]);
         const response = Utilities.parseJSON(message);
+
+        console.log("message from connection check: ", response);
 
         if (response.userID === userID) {
           console.log("This is your message..");
-        }
-
-        if (response.userID !== userID && response.content === "readySignal") {
-          setIsClientReady(true);
+          setAmIOnline(true);
         }
       },
     });
   };
 
-  // const handleSendMessage = () => {
-  //   handlePublishMessage("/app/application", message);
-  //   setMessage("");
-  // };
+  const handleReceivedMessage = (message) => {
+    setMessages((prevMessages) => [...prevMessages, message]);
+    console.log('Received message in parent:', message);
+  };
 
   const handleStartMeeting = () => {
-    const myRoomId = Utilities.generateUUID();
+    const myRoomId = Utilities.getUniqueID();
     setCurrentRoomID(myRoomId);
 
-    var startMessage = {
-      content: "offer",
+    var connectionCheckMessage = {
       userID: userID,
-      value: offer,
+      type: "connectionCheck"
     };
-    const jsonStringMessage = JSON.stringify(startMessage);
-    setOffer(jsonStringMessage);
-
-    setIsOfferReady(true);
+    const jsonStringMessage = JSON.stringify(connectionCheckMessage);
+    handlePublishMessage("/app/connection", jsonStringMessage);
   };
 
   const handleJoinMeeting = () => {
-    if (currentRoomID !== "" && currentRoomID.length > 0) {
-      // subscribe to this room
+    if (remoteRoomID !== "" && remoteRoomID.length > 0) {
+      
+      console.log("You are joining to a room");
+      // actually check for online presence and other stuff as well
+      setAmIOnline(true);
+
     } else {
       return;
     }
 
     var joinMessage = {
-      content: "readySignal",
       userID: userID,
-      value: null,
+      type: "readySignal",
+      content: null,
+      receiverID: null,
+      isPrivate: null,
+      roomID: null,
+      destination: null
     };
     const jsonStringMessage = JSON.stringify(joinMessage);
-    handlePublishMessage("/app/application", jsonStringMessage);
+    handlePublishMessage("/app/room", jsonStringMessage);
   };
 
   const handleRoomIDInputChange = (event) => {
-    setCurrentRoomID(event.target.value);
+    setRemoteRoomID(event.target.value);
   };
 
-  if (!stompConnection) {
+  if (!subscribeFlag) {
     return <ConnectingPageComponent />;
+  }
+
+  if(launchRoom) {
+    return <Lobby remoteRoomID={remoteRoomID} />;
   }
 
   return (
@@ -153,7 +153,7 @@ const Catchup = () => {
               <input
                   type="text"
                   placeholder="Enter a code or link"
-                  value={currentRoomID}
+                  value={remoteRoomID}
                   onChange={handleRoomIDInputChange}
                 />
             </div>
@@ -161,8 +161,8 @@ const Catchup = () => {
               className="text-button"
               onClick={handleJoinMeeting}
               style={{
-                color: currentRoomID.length > 0 ? "white" : "#757575",
-                cursor: currentRoomID.length > 0 ? "pointer" : "not-allowed",
+                color: remoteRoomID.length > 0 ? "white" : "#757575",
+                cursor: remoteRoomID.length > 0 ? "pointer" : "not-allowed",
               }}
             >
               Join

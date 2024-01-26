@@ -1,7 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 
 class Utilities {
-  static generateUUID() {
+  static getUniqueID() {
+    // use server side generated room ID
     return uuidv4();
   }
 
