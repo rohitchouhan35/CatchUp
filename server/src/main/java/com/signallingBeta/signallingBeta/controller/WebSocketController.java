@@ -35,6 +35,7 @@ public class WebSocketController {
         this.messagingTemplate = messagingTemplate;
     }
 
+
     @MessageMapping("/room")
     @SendTo("/room/messages")
     public SimpleMessage send(final SimpleMessage simpleMessage) throws Exception {
@@ -53,15 +54,8 @@ public class WebSocketController {
     @MessageMapping("/private")
     public SimpleMessage recMessage(@Payload SimpleMessage message) {
         messagingTemplate.convertAndSendToUser(message.getReceiverID(), "/private", message);
-//        chatMessageQueueService.enqueueMessage(message);
-        simpleMessageRepository.save(message);
+        chatMessageQueueService.enqueueMessage(message);
+//        simpleMessageRepository.save(message);
         return message;
-    }
-
-    @MessageMapping("/room/welcome")
-    @SendTo("/room/greetings")
-    public String welcomeMessage() {
-        String username = "Sunflower";
-        return "Welcome, " + username + "! You are connected.";
     }
 }

@@ -4,14 +4,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SimpleInfoExchangeMessage {
+public class IceCandidateMessage {
 
-    private String content;
-    private String userID;
-    private String value;
+    private String iceCandidate;
+    private String iceUserName;
+    private boolean didIOffer;
+
 
 }

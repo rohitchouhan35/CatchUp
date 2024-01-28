@@ -15,9 +15,9 @@ public class CatchupServiceImpl implements CatchupService {
 
     private static final Logger logger = LoggerFactory.getLogger(CatchupServiceImpl.class);
 
-    static {
-        uniqueRoomID = getLastRoomID();
-    }
+//    static {
+//        uniqueRoomID = getLastRoomID();
+//    }
 
     private static void initialize() {
         System.out.println("CatchupServiceImpl is initialized.");
@@ -48,7 +48,7 @@ public class CatchupServiceImpl implements CatchupService {
     public String generateUniqueRoomID() {
         int currNewRoomID = ++uniqueRoomID;
         logger.info("Assigning new Room ID: " + currNewRoomID);
-        saveLastRoomID(currNewRoomID);
+//        saveLastRoomID(currNewRoomID);
         return String.valueOf(currNewRoomID);
     }
 
