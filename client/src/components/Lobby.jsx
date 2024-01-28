@@ -4,25 +4,32 @@ import ChatBox from "./ChatBox";
 import ControlsView from "./ControlsView";
 import { ChatProvider } from "../contexts/ChatContext";
 import Utilities from "../utilities/Utilities";
-
+import NotificationBox from "./NotificationBox";
 import "../styles/Lobby.css";
 
-const Lobby = ({ remoteRoomID }) => {
+const Lobby = ({ remoteRoomID, userID }) => {
   const [isChatSectionOpen, setIsChatSectionOpen] = useState(false);
   const [lobbyID, setLobbyID] = useState(null);
 
   useEffect(() => {
-    if(!remoteRoomID && !lobbyID) {
-      console.log("remote room ID is: ", remoteRoomID);
-      const randomUUID = Utilities.getUniqueID();
-      setLobbyID(randomUUID);
-      // save this ID so that only server generated ID's are allowed
-    } else {
-      console.log("You are joinig some room");
-      setLobbyID(remoteRoomID);
-    }
+    const fetchLobbyId = async () => {
+      try {
+        // debugger;
+        if (!remoteRoomID && !lobbyID) {
+          console.log("remote room ID is: ", remoteRoomID);
+          const randomUUID = await Utilities.getUniqueID();
+          setLobbyID(randomUUID);
+        } else {
+          console.log("You are joinig some room");
+          setLobbyID(remoteRoomID);
+        }
+      } catch (error) {
+        console.error("Error initializing Stomp connection:", error);
+      }
+    };
+
+    fetchLobbyId();
   }, []);
-  
 
   const handleChatButtonClick = () => {
     setIsChatSectionOpen(!isChatSectionOpen);
@@ -32,10 +39,12 @@ const Lobby = ({ remoteRoomID }) => {
     <ChatProvider>
       <div className="lobby">
         <div className="lobby-container">
+        <NotificationBox message="You joined the room!" timeInSeconds={3} position="top-right"/>
           <UserView copyMessage={lobbyID} />
-          <ChatBox chatSessionID={lobbyID}/>
+          <ChatBox chatSessionID={lobbyID} userID={userID} />
         </div>
         <ControlsView handleChatButtonClick={handleChatButtonClick} />
+
       </div>
     </ChatProvider>
   );

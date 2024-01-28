@@ -17,9 +17,22 @@ const Catchup = () => {
   const [launchRoom, setLaunchRoom] = useState(false);
 
   useEffect(() => {
-    const userUUID = Utilities.getUniqueID();
-    setUserID(userUUID);
-    console.log(userUUID);
+    // const userUUID = Utilities.getUniqueID();
+    // setUserID(userUUID);
+    // console.log(userUUID);
+    
+    const fetchUserId = async () => {
+      try {
+        // debugger;
+        const userUUID = await Utilities.getUniqueID();
+        setUserID(userUUID);
+        console.log(userUUID);
+      } catch (error) {
+        console.error("Error initializing Stomp connection:", error);
+      }
+    };
+    
+    fetchUserId();
     console.log("Initialize stomp connection...");
 
     const connection = new StompConnection(
@@ -80,7 +93,7 @@ const Catchup = () => {
 
         console.log("message from connection check: ", response);
 
-        if (response.userID === userID) {
+        if (response.userID == userID) {
           console.log("This is your message..");
           setAmIOnline(true);
         }
@@ -94,8 +107,20 @@ const Catchup = () => {
   };
 
   const handleStartMeeting = () => {
-    const myRoomId = Utilities.getUniqueID();
-    setCurrentRoomID(myRoomId);
+    // const myRoomId = Utilities.getUniqueID();
+    // setCurrentRoomID(myRoomId);
+
+    const fetchMyRoomId = async () => {
+      try {
+        // debugger;
+          const myRoomId = await Utilities.getUniqueID();
+          setCurrentRoomID(myRoomId);
+      } catch (error) {
+        console.error("Error initializing Stomp connection:", error);
+      }
+    };
+
+    fetchMyRoomId();
 
     var connectionCheckMessage = {
       userID: userID,
@@ -138,7 +163,7 @@ const Catchup = () => {
   }
 
   if(launchRoom) {
-    return <Lobby remoteRoomID={remoteRoomID} />;
+    return <Lobby remoteRoomID={remoteRoomID} userID={userID} />;
   }
 
   return (
