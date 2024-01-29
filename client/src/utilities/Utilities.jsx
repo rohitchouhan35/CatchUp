@@ -24,6 +24,21 @@ class Utilities {
       return null;
     }
   }
+
+  static generateUniqueUsername(name = "") {
+    // If name is provided, use it; otherwise, generate a unique username based on timestamp
+    const baseUsername = name.trim() !== "" ? name.trim() : "User";
+    
+    try {
+      const timestamp = Date.now().toString().slice(4); // Remove the first 4 characters
+      const uniqueUsername = `${baseUsername}_${timestamp}`;
+      return uniqueUsername;
+    } catch (error) {
+      console.error("Error generating unique username:", error);
+      return null;
+    }
+  }
+
 }
 
 export default Utilities;
