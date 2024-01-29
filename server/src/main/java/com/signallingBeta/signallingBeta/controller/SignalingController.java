@@ -1,6 +1,7 @@
 package com.signallingBeta.signallingBeta.controller;
 
 import com.signallingBeta.signallingBeta.dto.IceCandidateMessage;
+import com.signallingBeta.signallingBeta.dto.NewOfferObj;
 import com.signallingBeta.signallingBeta.dto.WebRTCOffer;
 import com.signallingBeta.signallingBeta.service.SignallingService;
 import org.slf4j.Logger;
@@ -36,7 +37,7 @@ public class SignalingController {
     @Autowired
     private SignallingService signallingService;
 
-    private final List<WebRTCOffer> offers = new ArrayList<>();
+    private WebRTCOffer masterWebRTCOffer = null;
 
     private final Map<String, String> usernameToSessionIdMap = new ConcurrentHashMap<>();
 
@@ -49,95 +50,67 @@ public class SignalingController {
     }
 
     @MessageMapping("/signal")
-    @SendTo("/availableOffers")
-    public List<WebRTCOffer> userEntryPointForWebRTCSignalling(@Payload String username, SimpMessageHeaderAccessor headerAccessor)
+    @SendTo("/signal/availableOffers")
+    public WebRTCOffer userEntryPointForWebRTCSignalling(String username)
             throws Exception {
         logger.info("A new user in the video room with username: " + username);
-        if(username != null) {
-            usernameToSessionIdMap.put(username, headerAccessor.getSessionId());
-        }
-        if(offers.size() > 0) {
-            return offers;
-        }
-        return null;
+        logger.info("master offer in signal is: " + masterWebRTCOffer.toString());
+        return masterWebRTCOffer;
     }
 
     @MessageMapping("/newOffer")
-    public void handleNewOffer(WebRTCOffer newWebRTCOffer, Principal principal) {
-        logger.info("New offer came..... " + newWebRTCOffer.toString());
-        String userName = newWebRTCOffer.getOffererUserName();
-
-        WebRTCOffer newOffer = new WebRTCOffer(userName, newWebRTCOffer.getOffer(), null, null, null, null);
-        offers.add(newOffer);
-
-        // Send out to all connected sockets except the caller
-        for (Map.Entry<String, String> entry : usernameToSessionIdMap.entrySet()) {
-            if (!entry.getKey().equals(userName)) {
-                logger.info("Got room mate to share offer");
-                messagingTemplate.convertAndSendToUser(entry.getValue(), "/newOfferAwaiting", newOffer);
-            }
+    @SendTo("/signal/newOfferAwaiting")
+    public WebRTCOffer handleNewOffer(NewOfferObj newOfferObj) {
+//        logger.info("New offer came..... " + newOfferObj.toString());
+        String userName = newOfferObj.getUsername();
+        String offer = newOfferObj.getOffer();
+        WebRTCOffer newWebRTCOffer = new WebRTCOffer(userName, offer, new ArrayList<>(), null, null, new ArrayList<>());
+        if(offer != null && offer != "") {
+            masterWebRTCOffer = newWebRTCOffer;
         }
+        logger.info("master offer in new offer is: " + masterWebRTCOffer.toString());
+        return masterWebRTCOffer;
     }
 
     @MessageMapping("/newAnswer")
-    public void handleNewAnswer(WebRTCOffer newWebRTCAnswer, Principal principal) {
-        String userName = newWebRTCAnswer.getAnswererUserName();
-        String sessionId = principal.getName();
+    @SendTo("/signal/answerResponse")
+    public WebRTCOffer handleNewAnswer(WebRTCOffer newWebRTCAnswer, SimpMessageHeaderAccessor headerAccessor) {
+        logger.info("New answer received: " + newWebRTCAnswer.toString());
+        String userName = newWebRTCAnswer.getOffererUserName();
+        logger.info("Found this matching webrtc offer: " + masterWebRTCOffer);
 
-        // Find the corresponding WebRTCOffer
-        Optional<WebRTCOffer> optionalOffer = offers.stream()
-                .filter(offer -> offer.getOffererUserName().equals(userName))
-                .findFirst();
-
-        if (!optionalOffer.isPresent()) {
-            System.out.println("No matching WebRTCOffer");
-            return;
-        }
-
-        WebRTCOffer offerToUpdate = optionalOffer.get();
-
-        // Send back to the answerer all the iceCandidates we have already collected
-        messagingTemplate.convertAndSendToUser(sessionId, "/answerResponse", offerToUpdate.getOfferIceCandidates());
-
-        // Update the WebRTCOffer with the received answer
-        offerToUpdate.setAnswer(newWebRTCAnswer.getAnswer());
-        offerToUpdate.setAnswererUserName(userName);
-
-        // Send the answer response to the offerer
-        String offererSessionId = usernameToSessionIdMap.get(offerToUpdate.getOffererUserName());
-        messagingTemplate.convertAndSendToUser(offererSessionId, "/answerResponse", offerToUpdate);
+        masterWebRTCOffer.setAnswer(newWebRTCAnswer.getAnswer());
+        masterWebRTCOffer.setAnswererUserName(userName);
+        logger.info("master offer in new answer is: " + masterWebRTCOffer.toString());
+        return masterWebRTCOffer;
     }
 
     @MessageMapping("/sendIceCandidateToSignalingServer")
-    public void handleIceCandidate(IceCandidateMessage iceCandidateMessage, Principal principal) {
-        String userName = iceCandidateMessage.getIceUserName();
-        String sessionId = principal.getName();
+    @SendTo("/signal/receivedIceCandidateFromServer")
+    public IceCandidateMessage handleIceCandidate(IceCandidateMessage iceCandidateMessage) {
+        logger.info("Got ice candidate in sendIceCandidateToSignalingServer");
+        logger.info(iceCandidateMessage.toString());
 
-        // Find the corresponding WebRTCOffer
-        Optional<WebRTCOffer> optionalOffer = offers.stream()
-                .filter(offer -> offer.getOffererUserName().equals(userName) || offer.getAnswererUserName().equals(userName))
-                .findFirst();
+        String currentIceUserName = iceCandidateMessage.getIceUserName();
+        String currIce = iceCandidateMessage.getIceCandidate();
+        boolean didIOffer = iceCandidateMessage.isDidIOffer();
 
-        if (!optionalOffer.isPresent()) {
-            System.out.println("No matching WebRTCOffer");
-            return;
-        }
-
-        WebRTCOffer offerInOffers = optionalOffer.get();
-
-        // Add ice candidate to the corresponding WebRTCOffer
-        offerInOffers.getOfferIceCandidates().add(iceCandidateMessage.getIceCandidate());
-
-        // Find the target user's session ID
-        String targetSessionId;
-        if (iceCandidateMessage.isDidIOffer()) {
-            targetSessionId = usernameToSessionIdMap.get(offerInOffers.getAnswererUserName());
+        if(didIOffer) {
+            logger.info("This ice is from offerer");
+            List<String> tempIceCandidates = masterWebRTCOffer.getOfferIceCandidates();
+            tempIceCandidates.add(currIce);
+            masterWebRTCOffer.setOfferIceCandidates(tempIceCandidates);
         } else {
-            targetSessionId = usernameToSessionIdMap.get(offerInOffers.getOffererUserName());
+            logger.info("This ice is from answer");
+            List<String> tempIceCandidates = masterWebRTCOffer.getAnswererIceCandidates();
+            tempIceCandidates.add(currIce);
+            masterWebRTCOffer.setAnswererIceCandidates(tempIceCandidates);
         }
 
-        // Pass it through to the other socket
-        messagingTemplate.convertAndSendToUser(targetSessionId, "/receivedIceCandidateFromServer", iceCandidateMessage.getIceCandidate());
+        logger.info("iceCandidateMessage in send ice: " + iceCandidateMessage);
+        logger.info("master webrtc offer with ice candidates xx: " + masterWebRTCOffer.toString());
+
+        return iceCandidateMessage;
     }
 
 }

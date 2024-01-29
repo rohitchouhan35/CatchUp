@@ -7,10 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class IceCandidateMessage {
+public class NewOfferObj {
 
-    private String iceCandidate;
-    private String iceUserName;
-    private boolean didIOffer;
+    private String username;
+    private String offer;
 
 }
