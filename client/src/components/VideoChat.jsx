@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import StompConnection from "../config/Config.jsx";
 import Utilities from "../utilities/Utilities.jsx";
-import '../styles/VideoChat.css';
+import "../styles/VideoChat.css";
 import "../styles/Lobby.css";
 
 const VideoChat = () => {
@@ -21,7 +21,7 @@ const VideoChat = () => {
     console.log("Initialize stomp connection...");
     const connection = new StompConnection(
       // "wss://catchup-media-server.onrender.com/meet",
-      // "wss://catchup-media-server-beta.onrender.com/meet",
+      // "wss://catchup-media-server-test.onrender.com/meet",
       "ws://localhost:8080/meet",
       handleStompConnect
     );
@@ -51,7 +51,10 @@ const VideoChat = () => {
     stompConnection.subscribe("/signal/availableOffers", onAvailableOffers);
     stompConnection.subscribe("/signal/newOfferAwaiting", onNewOfferAwaiting);
     stompConnection.subscribe("/signal/answerResponse", onAnswerResponse);
-    stompConnection.subscribe("/signal/addIceCandidateFromOfferer", OnaddIceCandidateFromOfferer);
+    stompConnection.subscribe(
+      "/signal/addIceCandidateFromOfferer",
+      OnaddIceCandidateFromOfferer
+    );
     stompConnection.subscribe(
       "/signal/receivedIceCandidateFromServer",
       onReceivedIceCandidateFromServer
@@ -103,14 +106,17 @@ const VideoChat = () => {
       console.log(err);
     }
   };
-  
+
   const answerOffer = async (offerObj) => {
     await fetchUserMedia();
     await createPeerConnection(offerObj);
     const answer = await peerConnection.createAnswer({});
     await peerConnection.setLocalDescription(answer);
     offerObj.answer = JSON.stringify(answer);
-    const offerIceCandidatesXX = stompConnection.publish("/app/newAnswer", JSON.stringify(offerObj));
+    const offerIceCandidatesXX = stompConnection.publish(
+      "/app/newAnswer",
+      JSON.stringify(offerObj)
+    );
     const offerIceCandidates = offerObj.offerIceCandidates;
     offerIceCandidates.forEach((c) => {
       c = JSON.parse(c);
@@ -120,13 +126,13 @@ const VideoChat = () => {
 
   const OnaddIceCandidateFromOfferer = (offerIceCandidates) => {
     offerIceCandidates = JSON.parse(offerIceCandidates.body);
-    if(offerIceCandidates.username == username) {
+    if (offerIceCandidates.username == username) {
       return;
     }
     offerIceCandidates.forEach((c) => {
       peerConnection.addIceCandidate(c);
     });
-  }
+  };
 
   const addAnswer = async (offerObj) => {
     console.log("peerconnection: ", peerConnection);
@@ -152,28 +158,50 @@ const VideoChat = () => {
     return new Promise(async (resolve, reject) => {
       peerConnection = await new RTCPeerConnection(peerConfiguration);
       remoteStream = new MediaStream();
-      
+
       // Set up ontrack event handler to handle incoming tracks
       peerConnection.ontrack = (event) => {
         console.log("Got a track from the other peer!! How exciting");
         const [track] = event.streams[0].getTracks();
         console.log("Adding track to remote stream:", track);
         remoteStream.addTrack(track);
-        console.log("Here's an exciting moment... fingers crossed", remoteVideoEl);
-        
+        console.log(
+          "Here's an exciting moment... fingers crossed",
+          remoteVideoEl
+        );
+
         // Assign remoteStream to the srcObject of remoteVideoEl
         remoteVideoEl.current.srcObject = remoteStream;
       };
-  
+
       localStream.getTracks().forEach((track) => {
         peerConnection.addTrack(track, localStream);
       });
-  
+
+      if (localStream.getAudioTracks().length === 0) {
+        try {
+          // Capture audio from the studio
+          const studioStream = await navigator.mediaDevices.getUserMedia({
+            audio: { studio: true },
+            video: false, // Ensure only audio is captured from the studio
+          });
+
+          // Add the studio audio track to the peerConnection
+          studioStream.getAudioTracks().forEach((track) => {
+            peerConnection.addTrack(track, studioStream);
+          });
+        } catch (error) {
+          console.error("Error adding studio audio track:", error);
+          reject(error);
+          return;
+        }
+      }
+
       peerConnection.addEventListener("signalingstatechange", (event) => {
         console.log("Signal state change detected...");
         console.log(event);
       });
-  
+
       peerConnection.addEventListener("icecandidate", (e) => {
         if (e.candidate) {
           const iceCandidateMessage = {
@@ -187,22 +215,22 @@ const VideoChat = () => {
           );
         }
       });
-  
+
       if (offerObj) {
         try {
-          await peerConnection.setRemoteDescription(new RTCSessionDescription(JSON.parse(offerObj.offer)));
+          await peerConnection.setRemoteDescription(
+            new RTCSessionDescription(JSON.parse(offerObj.offer))
+          );
         } catch (error) {
           console.error("Error setting remote description:", error);
           reject(error);
           return;
         }
       }
-  
+
       resolve();
     });
   };
-  
-  
 
   const onAvailableOffers = (offers) => {
     offers = JSON.parse(offers.body);
@@ -211,11 +239,11 @@ const VideoChat = () => {
   function createOfferEls(offers) {
     //make green answer button for this new offer
     const answerEl = document.querySelector("#answer");
-      const o = offers;
-      const newOfferEl = document.createElement("div");
-      newOfferEl.innerHTML = `<button class="btn btn-success col-1">Answer ${o.offererUserName}</button>`;
-      newOfferEl.addEventListener("click", () => answerOffer(o));
-      answerEl.appendChild(newOfferEl);
+    const o = offers;
+    const newOfferEl = document.createElement("div");
+    newOfferEl.innerHTML = `<button class="btn btn-success col-1">Answer ${o.offererUserName}</button>`;
+    newOfferEl.addEventListener("click", () => answerOffer(o));
+    answerEl.appendChild(newOfferEl);
   }
 
   //someone just made a new offer and we're already here - call createOfferEl
@@ -242,7 +270,6 @@ const VideoChat = () => {
         const currIce = iceCandidateMessage.iceCandidate;
         addNewIceCandidate(currIce);
       } else {
-
       }
     } catch (error) {
       console.error(
@@ -262,7 +289,7 @@ const VideoChat = () => {
           playsInline
           controls
           style={{
-            "transform": "scaleX(-1)"
+            transform: "scaleX(-1)",
           }}
         />
         <video
@@ -272,7 +299,7 @@ const VideoChat = () => {
           playsInline
           controls
           style={{
-            "transform": "scaleX(-1)"
+            transform: "scaleX(-1)",
           }}
         />
       </div>

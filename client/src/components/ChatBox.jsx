@@ -14,8 +14,7 @@ const ChatBox = ({ chatSessionID, userID }) => {
 
   useEffect(() => {
     const connection = new StompConnection(
-      // "wss://catchup-media-server.onrender.com/meet",
-      // "wss://catchup-media-server-beta.onrender.com/meet",
+      // "https://catchup-media-server-test.onrender.com/",
       "ws://localhost:8080/meet",
       handleStompConnect
     );

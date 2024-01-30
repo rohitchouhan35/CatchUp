@@ -3,6 +3,8 @@ import UserView from "./UserView";
 import ChatBox from "./ChatBox";
 import ControlsView from "./ControlsView";
 import { ChatProvider } from "../contexts/ChatContext";
+import { VideoChatProvider } from "../contexts/VideoChatContext";
+
 import Utilities from "../utilities/Utilities";
 import NotificationBox from "./NotificationBox";
 import "../styles/Lobby.css";
@@ -36,17 +38,19 @@ const Lobby = ({ remoteRoomID, userID }) => {
   };
 
   return (
-    <ChatProvider>
-      <div className="lobby">
-        <div className="lobby-container">
-        <NotificationBox message="You joined the room!" timeInSeconds={3} position="top-right"/>
-          <UserView copyMessage={lobbyID} />
-          <ChatBox chatSessionID={lobbyID} userID={userID} />
-        </div>
-        <ControlsView handleChatButtonClick={handleChatButtonClick} />
+    <VideoChatProvider>
+      <ChatProvider>
+        <div className="lobby">
+          <div className="lobby-container">
+          <NotificationBox message="You joined the room!" timeInSeconds={3} position="top-right"/>
+            <UserView copyMessage={lobbyID} />
+            <ChatBox chatSessionID={lobbyID} userID={userID} />
+          </div>
+          <ControlsView handleChatButtonClick={handleChatButtonClick} />
 
-      </div>
-    </ChatProvider>
+        </div>
+      </ChatProvider>
+    </VideoChatProvider>
   );
 };
 

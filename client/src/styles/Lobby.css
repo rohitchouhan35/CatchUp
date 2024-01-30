@@ -212,3 +212,13 @@ input:focus{
   float: left;
   padding-left: 20px;
 }
+
+@media (max-width: 768px) {
+  .video-container {
+    display: block;
+  }
+
+  .user-card {
+    width: calc(90% - 20px);
+  }
+}
