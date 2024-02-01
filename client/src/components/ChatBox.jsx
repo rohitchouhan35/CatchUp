@@ -2,25 +2,19 @@ import React, { useState, useEffect, useRef } from "react";
 import { useChat } from "../contexts/ChatContext.jsx";
 import StompConnection from "../config/Config.jsx";
 import MessageViewComponent from "./MessageViewComponent";
-import Utilities from "../utilities/Utilities";
 import "../styles/Lobby.css";
 
-const ChatBox = ({ chatSessionID }) => {
+const ChatBox = ({ chatSessionID, userID }) => {
   const { isChatSectionOpen } = useChat();
   const [inputMessage, setInputMessage] = useState("");
   const messagesContainerRef = useRef(null);
   const [messages, setMessages] = useState([]);
   const [stompConnection, setStompConnection] = useState(null);
-  const [userID, setUserID] = useState("");
   const [subscribeFlag, setSubscribeFlag] = useState(false);
 
   useEffect(() => {
-    console.log("ChatBox initialize stomp connection...");
-    const userUUID = Utilities.getUniqueID();
-    setUserID(userUUID);
     const connection = new StompConnection(
-      // "wss://catchup-media-server.onrender.com/meet",
-      // "wss://catchup-media-server-beta.onrender.com/meet",
+      // "https://catchup-media-server-test.onrender.com/",
       "ws://localhost:8080/meet",
       handleStompConnect
     );
@@ -51,8 +45,9 @@ const ChatBox = ({ chatSessionID }) => {
 
   const onPrivateRoomMessageReceived = (message) => {
     try {
-      console.log("Message received from private room.");
       var messageData = JSON.parse(message.body);
+      console.log("Message received from private room with id: ", messageData.userID);
+      console.log(typeof messageData.userID);
       console.log(messageData);
       setMessages((prevMessages) => [...prevMessages, messageData]);
     } catch (error) {
@@ -75,7 +70,8 @@ const ChatBox = ({ chatSessionID }) => {
       destination: null,
     };
 
-    console.log("sending message from chatbox");
+    console.log("sending message from chatbox with id: ", userID);
+    console.log(typeof userID);
 
     stompConnection.publish("/app/private", JSON.stringify(newMessage));
     setInputMessage("");
@@ -108,7 +104,7 @@ const ChatBox = ({ chatSessionID }) => {
               {message.type === "message" && (
                 <MessageViewComponent
                   message={message.content}
-                  mine={message.userID === userID}
+                  mine={message.userID == userID}
                 />
               )}
             </div>

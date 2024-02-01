@@ -1,29 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import StompConnection from "../config/Config.jsx";
 import Utilities from "../utilities/Utilities.jsx";
-import { useVideoChat } from "../contexts/VideoChatContext.jsx";
-import Avatars from "./Avatars";
-import { FaCopy } from "react-icons/fa";
-import CopyText from "./CopyText";
+import "../styles/VideoChat.css";
 import "../styles/Lobby.css";
 
-const UserView = ({ copyMessage }) => {
-  const users = [
-    { id: 1, username: "Rohit Chouhan" },
-    { id: 2, username: "Siddharth Gohil" },
-  ];
-
-  // use useEffect to mimic call to start application
-  // don't wait for answer connect immediately
-
-  const { isMuted, isLive } = useVideoChat();
-
+const VideoChat = () => {
   const localVideoRef = useRef(null);
   const remoteVideoEl = useRef(null);
   const [stompConnection, setStompConnection] = useState(null);
   const [subscribeFlag, setSubscribeFlag] = useState(false);
   const [shouldStartCall, setShouldStartCall] = useState(true);
-  const [localUserStream, setLocalUserStream] = useState(null);
+  // const [localStream, setLocalStream] = useState(null);
   // const [remoteStream, setRemoteStream] = useState(null);
   const [username, setUsername] = useState("");
 
@@ -88,9 +75,9 @@ const UserView = ({ copyMessage }) => {
     peerConnection.addIceCandidate(iceCandidate);
   };
 
-  var localStream;
-  var remoteStream;
-  var peerConnection;
+  var localStream; //a var to hold the local video stream
+  var remoteStream; //a var to hold the remote video stream
+  var peerConnection; //the peerConnection that the two clients use to talk
   var didIOffer = false;
 
   let peerConfiguration = {
@@ -160,7 +147,7 @@ const UserView = ({ copyMessage }) => {
         // audio: true,
       });
       localVideoRef.current.srcObject = stream;
-      setLocalUserStream(stream);
+      // setLocalStream(stream);
       localStream = stream;
     } catch (err) {
       console.log(err);
@@ -172,9 +159,18 @@ const UserView = ({ copyMessage }) => {
       peerConnection = await new RTCPeerConnection(peerConfiguration);
       remoteStream = new MediaStream();
 
+      // Set up ontrack event handler to handle incoming tracks
       peerConnection.ontrack = (event) => {
+        console.log("Got a track from the other peer!! How exciting");
         const [track] = event.streams[0].getTracks();
+        console.log("Adding track to remote stream:", track);
         remoteStream.addTrack(track);
+        console.log(
+          "Here's an exciting moment... fingers crossed",
+          remoteVideoEl
+        );
+
+        // Assign remoteStream to the srcObject of remoteVideoEl
         remoteVideoEl.current.srcObject = remoteStream;
       };
 
@@ -182,13 +178,12 @@ const UserView = ({ copyMessage }) => {
         peerConnection.addTrack(track, localStream);
       });
 
-      // Check if there are no audio tracks in the localStream
       if (localStream.getAudioTracks().length === 0) {
         try {
           // Capture audio from the studio
           const studioStream = await navigator.mediaDevices.getUserMedia({
             audio: { studio: true },
-            video: false,
+            video: false, // Ensure only audio is captured from the studio
           });
 
           // Add the studio audio track to the peerConnection
@@ -242,11 +237,8 @@ const UserView = ({ copyMessage }) => {
     createOfferEls(offers);
   };
   function createOfferEls(offers) {
+    //make green answer button for this new offer
     const answerEl = document.querySelector("#answer");
-
-    // Clear previous children
-    answerEl.innerHTML = "";
-
     const o = offers;
     const newOfferEl = document.createElement("div");
     newOfferEl.innerHTML = `<button class="btn btn-success col-1">Answer ${o.offererUserName}</button>`;
@@ -287,133 +279,36 @@ const UserView = ({ copyMessage }) => {
     }
   };
 
-  const pauseVideo = () => {
-    localStream.getVideoTracks().forEach((track) => {
-      track.enabled = false;
-    });
-  };
-
-  const playVideo = () => {
-    localStream.getVideoTracks().forEach((track) => {
-      track.enabled = true;
-    });
-  };
-
-  const pauseAudio = () => {
-    localStream.getAudioTracks().forEach((track) => {
-      track.enabled = false;
-    });
-  };
-
-  const playAudio = () => {
-    localStream.getAudioTracks().forEach((track) => {
-      track.enabled = true;
-    });
-  };
-
-  useEffect(() => {
-    console.log("video is cliked: ", isLive);
-    console.log(localStream);
-
-    if (localUserStream) {
-      if (isLive) {
-        localUserStream.getVideoTracks().forEach((track) => {
-          track.enabled = true;
-        });
-      } else {
-        localUserStream.getVideoTracks().forEach((track) => {
-          track.enabled = false;
-        });
-      }
-
-      if (isMuted) {
-        localUserStream.getAudioTracks().forEach((track) => {
-          track.enabled = false;
-        });
-      } else {
-        localUserStream.getAudioTracks().forEach((track) => {
-          track.enabled = true;
-        });
-      }
-    }
-  }, [isLive, isMuted, localStream]);
-
-  const captureAndSendVideoFrame = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = localVideoRef.current.videoWidth/5;
-    canvas.height = localVideoRef.current.videoHeight/5;
-    const context = canvas.getContext("2d");
-    context.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
-    const videoFrame = canvas.toDataURL("image/webp").split(",")[1]; // Extract base64-encoded data
-
-    // console.log("sending video: ", videoFrame);
-    // Send the videoFrame to the server using WebSocket
-    stompConnection.publish("/app/live-video", videoFrame);
-  };
-
-  // const captureAndSendVideoFrame = () => {
-  //   if (localVideoRef.current) {
-  //     const canvas = document.createElement('canvas');
-  //     canvas.width = localVideoRef.current.videoWidth;
-  //     canvas.height = localVideoRef.current.videoHeight;
-  //     const context = canvas.getContext('2d');
-  //     context.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
-  //     const videoFrame = canvas.toDataURL('image/webp');
-  //     stompConnection.publish("/live-video", videoFrame);
-  //   }
-  // };
-
-  // Set an interval to capture and send video frames periodically
-  setInterval(captureAndSendVideoFrame, 500);
-
   return (
     <>
-      <div className="user-view">
-        <CopyText copyMessage={copyMessage} />
-        <div className="video-container">
-          {/* {users.map((user) => (
-            <div key={user.id} className="user-card">
-              <div className="random-avatar">
-                <Avatars />
-              </div>
-              <p>{user.username}</p>
-            </div>
-          ))} */}
-
-          {/* <div className="random-avatar">
-                <Avatars />
-              </div> */}
-
-          <video
-            className="user-card"
-            ref={localVideoRef}
-            autoPlay
-            playsInline
-            // controls
-            style={{
-              transform: "scaleX(-1)",
-            }}
-          />
-          <video
-            className="user-card"
-            ref={remoteVideoEl}
-            autoPlay
-            playsInline
-            // controls
-            style={{
-              transform: "scaleX(-1)",
-            }}
-          />
-        </div>
-
-        <button id="call" onClick={handleCallClick}>
-          Call
-        </button>
-        <button onClick={captureAndSendVideoFrame}>send screenshot</button>
-        <div id="answer" className="col"></div>
+      <div className="video-container">
+        <video
+          className="user-card"
+          ref={localVideoRef}
+          autoPlay
+          playsInline
+          controls
+          style={{
+            transform: "scaleX(-1)",
+          }}
+        />
+        <video
+          className="user-card"
+          ref={remoteVideoEl}
+          autoPlay
+          playsInline
+          controls
+          style={{
+            transform: "scaleX(-1)",
+          }}
+        />
       </div>
+      <button id="call" onClick={handleCallClick}>
+        Call
+      </button>
+      <div id="answer" className="col"></div>
     </>
   );
 };
 
-export default UserView;
+export default VideoChat;

@@ -1,0 +1,60 @@
+.notification-container {
+    position: fixed;
+    z-index: 1000;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+  }
+  
+  .notification-box {
+    background-color: #2e39fcaa;
+    color: #fff;
+    border-radius: 8px;
+    padding: 1px 32px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .top-right {
+    top: 3%;
+    right: 2%;
+    transform: translateX(100%);
+  }
+  
+  .top-left {
+    top: 3%;
+    left: 2%;
+    transform: translateX(-100%);
+  }
+  
+  .bottom-right {
+    bottom: 12%;
+    right: 2%;
+    transform: translateX(100%);
+  }
+  
+  .bottom-left {
+    bottom: 3%;
+    left: 2%;
+    transform: translateX(-100%);
+  }
+  
+  .top-center {
+    top: 3%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+  
+  .bottom-center {
+    bottom: 3%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+  }
+  
+  .visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  
+  .hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  
