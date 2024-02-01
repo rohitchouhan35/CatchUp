@@ -23,7 +23,7 @@ const UserView = ({ copyMessage }) => {
   const [stompConnection, setStompConnection] = useState(null);
   const [subscribeFlag, setSubscribeFlag] = useState(false);
   const [shouldStartCall, setShouldStartCall] = useState(true);
-  // const [localStream, setLocalStream] = useState(null);
+  const [localUserStream, setLocalUserStream] = useState(null);
   // const [remoteStream, setRemoteStream] = useState(null);
   const [username, setUsername] = useState("");
 
@@ -88,9 +88,9 @@ const UserView = ({ copyMessage }) => {
     peerConnection.addIceCandidate(iceCandidate);
   };
 
-  var localStream; //a var to hold the local video stream
-  var remoteStream; //a var to hold the remote video stream
-  var peerConnection; //the peerConnection that the two clients use to talk
+  var localStream;
+  var remoteStream;
+  var peerConnection;
   var didIOffer = false;
 
   let peerConfiguration = {
@@ -160,7 +160,7 @@ const UserView = ({ copyMessage }) => {
         // audio: true,
       });
       localVideoRef.current.srcObject = stream;
-      // setLocalStream(stream);
+      setLocalUserStream(stream);
       localStream = stream;
     } catch (err) {
       console.log(err);
@@ -188,7 +188,7 @@ const UserView = ({ copyMessage }) => {
           // Capture audio from the studio
           const studioStream = await navigator.mediaDevices.getUserMedia({
             audio: { studio: true },
-            video: false, 
+            video: false,
           });
 
           // Add the studio audio track to the peerConnection
@@ -288,51 +288,83 @@ const UserView = ({ copyMessage }) => {
   };
 
   const pauseVideo = () => {
-    localStream.getVideoTracks().forEach(track => {
+    localStream.getVideoTracks().forEach((track) => {
       track.enabled = false;
     });
-  }
+  };
 
   const playVideo = () => {
-    localStream.getVideoTracks().forEach(track => {
+    localStream.getVideoTracks().forEach((track) => {
       track.enabled = true;
     });
-  }
+  };
 
   const pauseAudio = () => {
-    localStream.getAudioTracks().forEach(track => {
+    localStream.getAudioTracks().forEach((track) => {
       track.enabled = false;
     });
-  }
+  };
 
   const playAudio = () => {
-    localStream.getAudioTracks().forEach(track => {
+    localStream.getAudioTracks().forEach((track) => {
       track.enabled = true;
     });
-  }
+  };
 
+  useEffect(() => {
+    console.log("video is cliked: ", isLive);
+    console.log(localStream);
 
-  // useEffect(() => {
+    if (localUserStream) {
+      if (isLive) {
+        localUserStream.getVideoTracks().forEach((track) => {
+          track.enabled = true;
+        });
+      } else {
+        localUserStream.getVideoTracks().forEach((track) => {
+          track.enabled = false;
+        });
+      }
 
-  //   // if(localStream){
-    
-  //   console.log("video: ", isLive);
-  //   console.log("audio: ", isMuted);
-  //   if(isLive) {
-  //      playVideo();
-  //   } else {
-  //      pauseVideo();
+      if (isMuted) {
+        localUserStream.getAudioTracks().forEach((track) => {
+          track.enabled = false;
+        });
+      } else {
+        localUserStream.getAudioTracks().forEach((track) => {
+          track.enabled = true;
+        });
+      }
+    }
+  }, [isLive, isMuted, localStream]);
+
+  const captureAndSendVideoFrame = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = localVideoRef.current.videoWidth/5;
+    canvas.height = localVideoRef.current.videoHeight/5;
+    const context = canvas.getContext("2d");
+    context.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
+    const videoFrame = canvas.toDataURL("image/webp").split(",")[1]; // Extract base64-encoded data
+
+    // console.log("sending video: ", videoFrame);
+    // Send the videoFrame to the server using WebSocket
+    stompConnection.publish("/app/live-video", videoFrame);
+  };
+
+  // const captureAndSendVideoFrame = () => {
+  //   if (localVideoRef.current) {
+  //     const canvas = document.createElement('canvas');
+  //     canvas.width = localVideoRef.current.videoWidth;
+  //     canvas.height = localVideoRef.current.videoHeight;
+  //     const context = canvas.getContext('2d');
+  //     context.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
+  //     const videoFrame = canvas.toDataURL('image/webp');
+  //     stompConnection.publish("/live-video", videoFrame);
   //   }
+  // };
 
-  //   if(isMuted) {
-  //      playAudio();
-  //   } else {
-  //      pauseAudio();
-  //   }
-  // // }
-    
-  // }, [isLive, isMuted]);
-  
+  // Set an interval to capture and send video frames periodically
+  setInterval(captureAndSendVideoFrame, 500);
 
   return (
     <>
@@ -377,8 +409,7 @@ const UserView = ({ copyMessage }) => {
         <button id="call" onClick={handleCallClick}>
           Call
         </button>
-        <button onClick={pauseVideo}>video</button>
-        <button onClick={pauseAudio}>audio</button>
+        <button onClick={captureAndSendVideoFrame}>send screenshot</button>
         <div id="answer" className="col"></div>
       </div>
     </>

@@ -6,7 +6,7 @@ const VideoChatContext = createContext();
 export const VideoChatProvider = ({ children }) => {
   const [isChatSectionOpen, setIsChatSectionOpen] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
-  const [isLive, setIsLive] = useState(false);
+  const [isLive, setIsLive] = useState(true);
 
   const toggleChatSection = () => {
     setIsChatSectionOpen((prev) => !prev);
