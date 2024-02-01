@@ -53,8 +53,8 @@ public class SignalingController {
     @SendTo("/signal/availableOffers")
     public WebRTCOffer userEntryPointForWebRTCSignalling(String username)
             throws Exception {
-        logger.info("A new user in the video room with username: " + username);
-        logger.info("master offer in signal is: " + masterWebRTCOffer.toString());
+//        logger.info("A new user in the video room with username: " + username);
+//        logger.info("master offer in signal is: " + masterWebRTCOffer.toString());
         return masterWebRTCOffer;
     }
 
@@ -68,20 +68,20 @@ public class SignalingController {
         if(offer != null && offer != "") {
             masterWebRTCOffer = newWebRTCOffer;
         }
-        logger.info("master offer in new offer is: " + masterWebRTCOffer.toString());
+//        logger.info("master offer in new offer is: " + masterWebRTCOffer.toString());
         return masterWebRTCOffer;
     }
 
     @MessageMapping("/newAnswer")
     @SendTo("/signal/answerResponse")
     public WebRTCOffer handleNewAnswer(WebRTCOffer newWebRTCAnswer, SimpMessageHeaderAccessor headerAccessor) {
-        logger.info("New answer received: " + newWebRTCAnswer.toString());
+//        logger.info("New answer received: " + newWebRTCAnswer.toString());
         String userName = newWebRTCAnswer.getOffererUserName();
-        logger.info("Found this matching webrtc offer: " + masterWebRTCOffer);
+//        logger.info("Found this matching webrtc offer: " + masterWebRTCOffer);
 
         masterWebRTCOffer.setAnswer(newWebRTCAnswer.getAnswer());
         masterWebRTCOffer.setAnswererUserName(userName);
-        logger.info("master offer in new answer is: " + masterWebRTCOffer.toString());
+//        logger.info("master offer in new answer is: " + masterWebRTCOffer.toString());
         return masterWebRTCOffer;
     }
 
@@ -89,7 +89,7 @@ public class SignalingController {
     @SendTo("/signal/receivedIceCandidateFromServer")
     public IceCandidateMessage handleIceCandidate(IceCandidateMessage iceCandidateMessage) {
         logger.info("Got ice candidate in sendIceCandidateToSignalingServer");
-        logger.info(iceCandidateMessage.toString());
+//        logger.info(iceCandidateMessage.toString());
 
         String currentIceUserName = iceCandidateMessage.getIceUserName();
         String currIce = iceCandidateMessage.getIceCandidate();
@@ -107,8 +107,8 @@ public class SignalingController {
             masterWebRTCOffer.setAnswererIceCandidates(tempIceCandidates);
         }
 
-        logger.info("iceCandidateMessage in send ice: " + iceCandidateMessage);
-        logger.info("master webrtc offer with ice candidates xx: " + masterWebRTCOffer.toString());
+//        logger.info("iceCandidateMessage in send ice: " + iceCandidateMessage);
+//        logger.info("master webrtc offer with ice candidates xx: " + masterWebRTCOffer.toString());
 
         return iceCandidateMessage;
     }
