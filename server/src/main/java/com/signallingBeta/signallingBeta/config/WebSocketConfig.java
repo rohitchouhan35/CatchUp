@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketTransportRegistration;
 
 @CrossOrigin("*")
 @Configuration
@@ -21,8 +22,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
         config.setApplicationDestinationPrefixes("/app");
-        config.enableSimpleBroker("/room", "/user","/connection","/signal","/media");
+        config.enableSimpleBroker("/room", "/user", "/connection", "/signal", "/media");
         config.setUserDestinationPrefix("/user");
+    }
+
+    @Override
+    public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
+        registration.setSendBufferSizeLimit(512 * 1024); // buffer size limit 512 KB
+        registration.setMessageSizeLimit(128 * 1024); // maximum message to 128 KB
     }
 
 }
