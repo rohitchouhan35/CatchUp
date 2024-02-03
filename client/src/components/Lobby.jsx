@@ -43,7 +43,7 @@ const Lobby = ({ remoteRoomID, userID }) => {
         <div className="lobby">
           <div className="lobby-container">
           <NotificationBox message="You joined the room!" timeInSeconds={3} position="top-right"/>
-            <UserView copyMessage={lobbyID} />
+            <UserView copyMessage={lobbyID} userID={userID} />
             <ChatBox chatSessionID={lobbyID} userID={userID} />
           </div>
           <ControlsView handleChatButtonClick={handleChatButtonClick} />

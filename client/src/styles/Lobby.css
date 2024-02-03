@@ -213,6 +213,48 @@ input:focus{
   padding-left: 20px;
 }
 
+/* Container styling */
+.media-feed {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.card {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin: 10px;
+}
+
+/* Header styling */
+.media-feed h1 {
+  text-align: center;
+  color: #1a0dab;
+}
+
+/* Video playback styling */
+.video-playback {
+  display: flex;
+  justify-content: space-around;
+  padding: 20px;
+}
+
+.local-video-playback,
+.remote-video-playback {
+  flex: 1;
+  padding: 10px;
+}
+
+#videoFrame {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
+
 @media (max-width: 768px) {
   .video-container {
     display: block;

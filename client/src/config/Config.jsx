@@ -1,4 +1,4 @@
-import { Client } from "@stomp/stompjs";
+import { Client, StompHeaders } from "@stomp/stompjs";
 
 class StompConnection {
   constructor(brokerURL, onConnectCallback) {
@@ -30,6 +30,16 @@ class StompConnection {
     this.stompClient.publish({
       destination: destination,
       body: message,
+    });
+  }
+
+  sendFrame(destination, body, headers = {}) {
+    const stompHeaders = new StompHeaders(headers);
+  
+    this.stompClient.publish({
+      destination: destination,
+      body: body,
+      ...stompHeaders,
     });
   }
 }
