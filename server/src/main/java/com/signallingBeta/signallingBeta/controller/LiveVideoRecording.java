@@ -35,13 +35,20 @@ public class LiveVideoRecording {
         this.simpMessagingTemplate = simpMessagingTemplate;
     }
 
+//    @MessageMapping("/live-video")
+//    @SendTo("/media/live-feed")
+//    public String handleLiveVideoFrame(@Payload VideoFrameModel videoFrameModel) throws IOException {
+////        byte[] decodedVideoFrame = Base64.getDecoder().decode(videoFrameModel.getPayload());
+//        logger.info("Received total " + videoFrameModel.getPayload().toString().length() + " Bytes.");
+//        videoProcessing.saveBase64EncodedVideoFrame(videoFrameModel);
+//        return videoFrameModel.getPayload().toString();
+//    }
+
     @MessageMapping("/live-video")
     @SendTo("/media/live-feed")
-    public String handleLiveVideoFrame(@Payload VideoFrameModel videoFrameModel) throws IOException {
-//        byte[] decodedVideoFrame = Base64.getDecoder().decode(videoFrameModel.getPayload());
-        logger.info("Received total " + videoFrameModel.getPayload().toString().length() + " Bytes.");
-        videoProcessing.saveBase64EncodedVideoFrame(videoFrameModel);
-        return videoFrameModel.getPayload().toString();
+    public String handleLiveVideoFrame(@Payload String videoFrame) throws IOException {
+        logger.info("Received total " + videoFrame.length() + " Bytes.");
+        return videoFrame;
     }
 
     @MessageMapping("/live-binary-video")
