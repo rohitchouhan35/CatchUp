@@ -21,7 +21,7 @@ const PrivateChatBox = () => {
     setUserID(userUUID);
     const connection = new StompConnection(
       // "wss://catchup-media-server-test.onrender.com/",
-      "ws://localhost:8080/meet",
+      "wss://catchup-media-server-beta.onrender.com/meet",
       handleStompConnect
     );
     setStompConnection(connection);

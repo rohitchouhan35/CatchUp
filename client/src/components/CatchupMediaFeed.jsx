@@ -11,7 +11,7 @@ const CatchUpMediaFeed = () => {
   useEffect(() => {
     const connection = new StompConnection(
       // "https://catchup-media-server-test.onrender.com/",
-      "ws://localhost:8080/meet",
+      "wss://catchup-media-server-beta.onrender.com/meet",
       handleStompConnect
     );
     setStompConnection(connection);
@@ -51,6 +51,7 @@ const CatchUpMediaFeed = () => {
       // console.log(frame.body);
       // Assuming frame.body is a base64-encoded image string
       const base64String = frame.body;
+      // console.log(frame.body);
 
       // Set the base64 string as the source of the image element
       document.getElementById(
@@ -65,7 +66,8 @@ const CatchUpMediaFeed = () => {
     try {
       // console.log(frame.body);
       // Assuming frame.body is a base64-encoded image string
-      const base64String = JSON.parse(frame.body.data);
+      console.log(frame.body);
+      // const base64String = frame.body;
 
       // Set the base64 string as the source of the image element
       document.getElementById(

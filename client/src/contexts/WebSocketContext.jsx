@@ -7,7 +7,7 @@ export const WebSocketProvider = ({ children }) => {
   const [stompConnection, setStompConnection] = useState(null);
 
   useEffect(() => {
-    const connection = new StompConnection("ws://localhost:8080/meet");
+    const connection = new StompConnection("wss://catchup-media-server-beta.onrender.com/meet");
     setStompConnection(connection);
 
     return () => {

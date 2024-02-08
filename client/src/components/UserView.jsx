@@ -36,7 +36,7 @@ const UserView = ({ copyMessage, userID }) => {
     const connection = new StompConnection(
       // "wss://catchup-media-server.onrender.com/meet",
       // "wss://catchup-media-server-test.onrender.com/meet",
-      "ws://localhost:8080/meet",
+      "wss://catchup-media-server-beta.onrender.com/meet",
       handleStompConnect
     );
     setStompConnection(connection);
@@ -342,7 +342,7 @@ const UserView = ({ copyMessage, userID }) => {
   }, [isLive, isMuted, localStream]);
 
   let lastFrameTime = 0;
-  const targetFrameRate = 2; 
+  const targetFrameRate = 8; 
 
   const captureAndSendVideoFrame = () => {
     const currentTime = performance.now();
@@ -358,12 +358,12 @@ const UserView = ({ copyMessage, userID }) => {
         const context = canvas.getContext("2d");
         context.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
         const videoFrame = canvas.toDataURL("image/webp").split(",")[1];
-        const localVideDataObj = {
-          "userID": userID,
-          "payload": videoFrame,
-        }
+        // const localVideDataObj = {
+        //   "userID": userID,
+        //   "payload": videoFrame,
+        // }
 
-        stompConnection.publish("/app/live-video", JSON.stringify(localVideDataObj));
+        stompConnection.publish("/app/live-video", videoFrame);
 
         lastFrameTime = currentTime;
       }

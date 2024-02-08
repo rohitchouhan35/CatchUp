@@ -16,7 +16,7 @@ const WebRTCComponent = () => {
     const connection = new StompConnection(
       // "wss://catchup-media-server.onrender.com/meet",
       // "ws://localhost:8080/meet",
-      "ws://localhost:8080/meet",
+      "wss://catchup-media-server-beta.onrender.com/meet",
       handleStompConnect
     );
     setStompConnection(connection);
