@@ -12,6 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class WebRTCOffer {
 
+    private int roomID;
     private String offererUserName;
     private String offer;
     private List<String> offerIceCandidates;

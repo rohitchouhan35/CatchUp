@@ -7,11 +7,9 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class IceCandidateMessage {
+public class UserRequestData {
 
+    private String username;
     private int roomID;
-    private String iceCandidate;
-    private String iceUserName;
-    private boolean didIOffer;
 
 }

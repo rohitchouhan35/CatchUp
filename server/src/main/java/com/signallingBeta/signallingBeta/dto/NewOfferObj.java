@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class NewOfferObj {
 
+    private int roomID;
     private String username;
     private String offer;
 
