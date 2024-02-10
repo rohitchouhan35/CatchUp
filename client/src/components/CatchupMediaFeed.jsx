@@ -11,7 +11,8 @@ const CatchUpMediaFeed = () => {
   useEffect(() => {
     const connection = new StompConnection(
       // "https://catchup-media-server-test.onrender.com/",
-      "wss://catchup-media-server-beta.onrender.com/meet",
+      // "wss://catchup-media-server-beta.onrender.com/meet",
+      "ws://localhost:8080/meet",
       handleStompConnect
     );
     setStompConnection(connection);

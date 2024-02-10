@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-const BASE_URL_HOSTED = "https://catchup-media-server-beta.onrender.com";
+// const BASE_URL_HOSTED = "https://catchup-media-server-beta.onrender.com";
 // const BASE_URL_HOSTED = "wss://catchup-media-server-beta.onrender.com/meet";
+const BASE_URL_HOSTED = "http://localhost:8080";
 
 const GET_UNIQUE_ROOM_ID = BASE_URL_HOSTED + '/catchup/generateRoomID';
 

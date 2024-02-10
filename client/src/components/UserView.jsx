@@ -13,11 +13,7 @@ const UserView = ({ copyMessage, userID }) => {
     { id: 2, username: "Siddharth Gohil" },
   ];
 
-  // use useEffect to mimic call to start application
-  // don't wait for answer connect immediately
-
   const { isMuted, isLive } = useVideoChat();
-
   const localVideoRef = useRef(null);
   const remoteVideoEl = useRef(null);
   const [stompConnection, setStompConnection] = useState(null);
@@ -36,7 +32,8 @@ const UserView = ({ copyMessage, userID }) => {
     const connection = new StompConnection(
       // "wss://catchup-media-server.onrender.com/meet",
       // "wss://catchup-media-server-test.onrender.com/meet",
-      "wss://catchup-media-server-beta.onrender.com/meet",
+      // "wss://catchup-media-server-beta.onrender.com/meet",
+      "ws://localhost:8080/meet",
       handleStompConnect
     );
     setStompConnection(connection);
@@ -73,7 +70,12 @@ const UserView = ({ copyMessage, userID }) => {
       "/signal/receivedIceCandidateFromServer",
       onReceivedIceCandidateFromServer
     );
-    stompConnection.publish("/app/signal", JSON.stringify(username));
+
+    const userRequestData = {
+      roomID: copyMessage,
+      username: username
+    }
+    stompConnection.publish("/app/signal", JSON.stringify(userRequestData));
     // if (shouldStartCall) {
     //   call();
     // }
@@ -86,7 +88,7 @@ const UserView = ({ copyMessage, userID }) => {
   const addNewIceCandidate = (iceCandidate) => {
     iceCandidate = JSON.parse(iceCandidate);
     console.log(typeof iceCandidate.candidate);
-    peerConnection.addIceCandidate(iceCandidate);
+    if(peerConnection) peerConnection.addIceCandidate(iceCandidate);
   };
 
   var localStream;
@@ -112,6 +114,7 @@ const UserView = ({ copyMessage, userID }) => {
       peerConnection.setLocalDescription(offer);
       didIOffer = true;
       const newOfferObj = {
+        roomID: copyMessage,
         username: username,
         offer: JSON.stringify(offer),
       };
@@ -216,6 +219,7 @@ const UserView = ({ copyMessage, userID }) => {
             iceCandidate: JSON.stringify(e.candidate),
             iceUserName: username,
             didIOffer,
+            roomID: copyMessage,
           };
           stompConnection.publish(
             "/app/sendIceCandidateToSignalingServer",
@@ -290,30 +294,6 @@ const UserView = ({ copyMessage, userID }) => {
     }
   };
 
-  const pauseVideo = () => {
-    localStream.getVideoTracks().forEach((track) => {
-      track.enabled = false;
-    });
-  };
-
-  const playVideo = () => {
-    localStream.getVideoTracks().forEach((track) => {
-      track.enabled = true;
-    });
-  };
-
-  const pauseAudio = () => {
-    localStream.getAudioTracks().forEach((track) => {
-      track.enabled = false;
-    });
-  };
-
-  const playAudio = () => {
-    localStream.getAudioTracks().forEach((track) => {
-      track.enabled = true;
-    });
-  };
-
   useEffect(() => {
     console.log("video is cliked: ", isLive);
     console.log(localStream);
@@ -342,7 +322,7 @@ const UserView = ({ copyMessage, userID }) => {
   }, [isLive, isMuted, localStream]);
 
   let lastFrameTime = 0;
-  const targetFrameRate = 8; 
+  const targetFrameRate = 8;
 
   const captureAndSendVideoFrame = () => {
     const currentTime = performance.now();
@@ -368,103 +348,21 @@ const UserView = ({ copyMessage, userID }) => {
         lastFrameTime = currentTime;
       }
 
-    } catch(e) {
+    } catch (e) {
       console.error(e);
     }
 
-    requestAnimationFrame(captureAndSendVideoFrame);
+    // requestAnimationFrame(captureAndSendVideoFrame);
   };
 
-// Start capturing frames
-captureAndSendVideoFrame();
+  // Start capturing frames
+  // captureAndSendVideoFrame();
 
-
-  // const captureAndSendVideoFrame = () => {
-  //   const canvas = document.createElement("canvas");
-  //   canvas.width = localVideoRef.current.videoWidth/3;
-  //   canvas.height = localVideoRef.current.videoHeight/3;
-  //   const context = canvas.getContext("2d");
-  //   context.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
-  //   const videoFrame = canvas.toDataURL("image/webp").split(",")[1];
-
-  //   // console.log("sending video: ", videoFrame);
-  //   // Send the videoFrame to the server using WebSocket
-  //   stompConnection.publish("/app/live-video", videoFrame);
-  // };
-
-  // const captureAndSendVideoFrame = () => {
-  //   const track = localUserStream.getVideoTracks()[0];
-
-  //   // Create an ImageCapture object from the video track
-  //   const imageCapture = new ImageCapture(track);
-
-  //   // Grab a frame from the video track
-  //   imageCapture
-  //     .grabFrame()
-  //     .then((imageBitmap) => {
-
-  //       console.log("Imagebitmap is: ", imageBitmap);
-  //       // Get pixel data from the imageBitmap
-  //       const imageData = imageBitmap
-  //         .getContext("2d")
-  //         .getImageData(0, 0, imageBitmap.width, imageBitmap.height);
-  //       const videoFrameBuffer = new Uint8Array(imageData.data.buffer);
-
-  //       console.log("sendig binary data: ", videoFrameBuffer);
-
-  //       // Publish the video frame to the server using WebSocket
-  //       stompConnection.publish("/app/live-binary-video", videoFrameBuffer);
-  //     })
-  //     .catch((error) => {
-  //       console.error("Error grabbing frame:", error);
-  //     });
-  // };
-
-  // Set an interval to capture and send video frames periodically
-  // setInterval(captureAndSendVideoFrame, 100);
-
-  const sendVideoStream = (stream) => {
-    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8' });
-  
-    mediaRecorder.ondataavailable = async (event) => {
-      if (event.data.size > 0) {
-        const binaryData = await event.data.arrayBuffer();
-  
-        // Split the binaryData into smaller chunks (e.g., 10 KB chunks)
-        const chunkSize = 10 * 1024; // 10 KB
-        // const chunkSize = 10 * 10; // 1 KB
-        for (let i = 0; i < binaryData.byteLength; i += chunkSize) {
-          const chunk = new Uint8Array(binaryData.slice(i, i + chunkSize));
-          stompConnection.sendFrame('/app/live-binary-video', chunk);
-        }
-      }
-    };
-  
-    mediaRecorder.start();
-  
-    setInterval(() => {
-      mediaRecorder.requestData();
-    }, 1000);
-  };
-  
   return (
     <>
       <div className="user-view">
         <CopyText copyMessage={copyMessage} />
         <div className="video-container">
-          {/* {users.map((user) => (
-            <div key={user.id} className="user-card">
-              <div className="random-avatar">
-                <Avatars />
-              </div>
-              <p>{user.username}</p>
-            </div>
-          ))} */}
-
-          {/* <div className="random-avatar">
-                <Avatars />
-              </div> */}
-
           <video
             className="user-card"
             ref={localVideoRef}
