@@ -7,7 +7,7 @@ import { FaCopy } from "react-icons/fa";
 import CopyText from "./CopyText";
 import "../styles/Lobby.css";
 
-const UserView = ({ copyMessage }) => {
+const UserView = ({ copyMessage, userID }) => {
   const users = [
     { id: 1, username: "Rohit Chouhan" },
     { id: 2, username: "Siddharth Gohil" },
@@ -26,6 +26,7 @@ const UserView = ({ copyMessage }) => {
   const [localUserStream, setLocalUserStream] = useState(null);
   // const [remoteStream, setRemoteStream] = useState(null);
   const [username, setUsername] = useState("");
+  const [showRemoteStreamVideo, setShowRemoteStreamVideo] = useState(false);
 
   useEffect(() => {
     const newRandomUsername = Utilities.generateUniqueUsername("Rohit");
@@ -35,7 +36,7 @@ const UserView = ({ copyMessage }) => {
     const connection = new StompConnection(
       // "wss://catchup-media-server.onrender.com/meet",
       // "wss://catchup-media-server-test.onrender.com/meet",
-      "ws://localhost:8080/meet",
+      "wss://catchup-media-server-beta.onrender.com/meet",
       handleStompConnect
     );
     setStompConnection(connection);
@@ -162,6 +163,7 @@ const UserView = ({ copyMessage }) => {
       localVideoRef.current.srcObject = stream;
       setLocalUserStream(stream);
       localStream = stream;
+      // sendVideoStream(stream);
     } catch (err) {
       console.log(err);
     }
@@ -176,6 +178,7 @@ const UserView = ({ copyMessage }) => {
         const [track] = event.streams[0].getTracks();
         remoteStream.addTrack(track);
         remoteVideoEl.current.srcObject = remoteStream;
+        setShowRemoteStreamVideo(true);
       };
 
       localStream.getTracks().forEach((track) => {
@@ -338,34 +341,112 @@ const UserView = ({ copyMessage }) => {
     }
   }, [isLive, isMuted, localStream]);
 
-  const captureAndSendVideoFrame = () => {
-    const canvas = document.createElement("canvas");
-    canvas.width = localVideoRef.current.videoWidth/5;
-    canvas.height = localVideoRef.current.videoHeight/5;
-    const context = canvas.getContext("2d");
-    context.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
-    const videoFrame = canvas.toDataURL("image/webp").split(",")[1]; // Extract base64-encoded data
+  let lastFrameTime = 0;
+  const targetFrameRate = 8; 
 
-    // console.log("sending video: ", videoFrame);
-    // Send the videoFrame to the server using WebSocket
-    stompConnection.publish("/app/live-video", videoFrame);
+  const captureAndSendVideoFrame = () => {
+    const currentTime = performance.now();
+    const timeSinceLastFrame = currentTime - lastFrameTime;
+    const scaleFactor = 0.3;
+
+    try {
+
+      if (timeSinceLastFrame >= 1000 / targetFrameRate) {
+        const canvas = document.createElement("canvas");
+        canvas.width = localVideoRef.current.videoWidth * scaleFactor;
+        canvas.height = localVideoRef.current.videoHeight * scaleFactor;
+        const context = canvas.getContext("2d");
+        context.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
+        const videoFrame = canvas.toDataURL("image/webp").split(",")[1];
+        // const localVideDataObj = {
+        //   "userID": userID,
+        //   "payload": videoFrame,
+        // }
+
+        stompConnection.publish("/app/live-video", videoFrame);
+
+        lastFrameTime = currentTime;
+      }
+
+    } catch(e) {
+      console.error(e);
+    }
+
+    requestAnimationFrame(captureAndSendVideoFrame);
   };
 
+// Start capturing frames
+captureAndSendVideoFrame();
+
+
   // const captureAndSendVideoFrame = () => {
-  //   if (localVideoRef.current) {
-  //     const canvas = document.createElement('canvas');
-  //     canvas.width = localVideoRef.current.videoWidth;
-  //     canvas.height = localVideoRef.current.videoHeight;
-  //     const context = canvas.getContext('2d');
-  //     context.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
-  //     const videoFrame = canvas.toDataURL('image/webp');
-  //     stompConnection.publish("/live-video", videoFrame);
-  //   }
+  //   const canvas = document.createElement("canvas");
+  //   canvas.width = localVideoRef.current.videoWidth/3;
+  //   canvas.height = localVideoRef.current.videoHeight/3;
+  //   const context = canvas.getContext("2d");
+  //   context.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
+  //   const videoFrame = canvas.toDataURL("image/webp").split(",")[1];
+
+  //   // console.log("sending video: ", videoFrame);
+  //   // Send the videoFrame to the server using WebSocket
+  //   stompConnection.publish("/app/live-video", videoFrame);
+  // };
+
+  // const captureAndSendVideoFrame = () => {
+  //   const track = localUserStream.getVideoTracks()[0];
+
+  //   // Create an ImageCapture object from the video track
+  //   const imageCapture = new ImageCapture(track);
+
+  //   // Grab a frame from the video track
+  //   imageCapture
+  //     .grabFrame()
+  //     .then((imageBitmap) => {
+
+  //       console.log("Imagebitmap is: ", imageBitmap);
+  //       // Get pixel data from the imageBitmap
+  //       const imageData = imageBitmap
+  //         .getContext("2d")
+  //         .getImageData(0, 0, imageBitmap.width, imageBitmap.height);
+  //       const videoFrameBuffer = new Uint8Array(imageData.data.buffer);
+
+  //       console.log("sendig binary data: ", videoFrameBuffer);
+
+  //       // Publish the video frame to the server using WebSocket
+  //       stompConnection.publish("/app/live-binary-video", videoFrameBuffer);
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error grabbing frame:", error);
+  //     });
   // };
 
   // Set an interval to capture and send video frames periodically
-  setInterval(captureAndSendVideoFrame, 500);
+  // setInterval(captureAndSendVideoFrame, 100);
 
+  const sendVideoStream = (stream) => {
+    const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp8' });
+  
+    mediaRecorder.ondataavailable = async (event) => {
+      if (event.data.size > 0) {
+        const binaryData = await event.data.arrayBuffer();
+  
+        // Split the binaryData into smaller chunks (e.g., 10 KB chunks)
+        const chunkSize = 10 * 1024; // 10 KB
+        // const chunkSize = 10 * 10; // 1 KB
+        for (let i = 0; i < binaryData.byteLength; i += chunkSize) {
+          const chunk = new Uint8Array(binaryData.slice(i, i + chunkSize));
+          stompConnection.sendFrame('/app/live-binary-video', chunk);
+        }
+      }
+    };
+  
+    mediaRecorder.start();
+  
+    setInterval(() => {
+      mediaRecorder.requestData();
+    }, 1000);
+  };
+  
   return (
     <>
       <div className="user-view">
@@ -402,6 +483,7 @@ const UserView = ({ copyMessage }) => {
             // controls
             style={{
               transform: "scaleX(-1)",
+              display: showRemoteStreamVideo ? 'block' : 'none',
             }}
           />
         </div>

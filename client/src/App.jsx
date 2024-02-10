@@ -12,7 +12,7 @@ function App() {
     <>
       <Router>
         <Routes>
-          <Route path="/catchup" element={<Catchup />} />
+          {/* <Route path="/catchup" element={<Catchup />} /> */}
           <Route path="/" element={<Catchup />} />
           <Route path="/chat" element={<PrivateChatBox />} />
           <Route path="/wrtc" element={<WebRTCComponent />} />

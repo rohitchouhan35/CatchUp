@@ -11,7 +11,7 @@ public class CatchupServiceImpl implements CatchupService {
 
     private static int uniqueRoomID = 0;
 
-    private static String lastUniqueIDFilePath = "./src/main/java/com/signallingBeta/signallingBeta/DiskFiles/lastUid.txt";
+    private static final String lastUniqueIDFilePath = "./src/main/java/com/signallingBeta/signallingBeta/DiskFiles/lastUid.txt";
 
     private static final Logger logger = LoggerFactory.getLogger(CatchupServiceImpl.class);
 

@@ -2,6 +2,7 @@ package com.signallingBeta.signallingBeta.controller;
 
 import com.signallingBeta.signallingBeta.dto.IceCandidateMessage;
 import com.signallingBeta.signallingBeta.dto.NewOfferObj;
+import com.signallingBeta.signallingBeta.dto.UserRequestData;
 import com.signallingBeta.signallingBeta.dto.WebRTCOffer;
 import com.signallingBeta.signallingBeta.service.SignallingService;
 import org.slf4j.Logger;
@@ -35,9 +36,7 @@ public class SignalingController {
     private static final Logger logger = LoggerFactory.getLogger(SignalingController.class);
 
     @Autowired
-    private SignallingService signallingService;
-
-    private WebRTCOffer masterWebRTCOffer = null;
+    private final SignallingService signallingService;
 
     private final Map<String, String> usernameToSessionIdMap = new ConcurrentHashMap<>();
 
@@ -51,66 +50,66 @@ public class SignalingController {
 
     @MessageMapping("/signal")
     @SendTo("/signal/availableOffers")
-    public WebRTCOffer userEntryPointForWebRTCSignalling(String username)
-            throws Exception {
-//        logger.info("A new user in the video room with username: " + username);
-//        logger.info("master offer in signal is: " + masterWebRTCOffer.toString());
-        return masterWebRTCOffer;
+    public WebRTCOffer userEntryPointForWebRTCSignalling(@Payload UserRequestData userRequestData) throws Exception {
+        try {
+            logger.info("A new user in room {} with username: {}", userRequestData.getRoomID(), userRequestData.getUsername());
+            return signallingService.getOffer(userRequestData.getRoomID());
+        } catch (Exception e) {
+            logger.error("Error processing WebRTC signalling for user: {}", userRequestData.getUsername(), e);
+            throw new RuntimeException("Error processing WebRTC signalling", e);
+        }
     }
 
     @MessageMapping("/newOffer")
     @SendTo("/signal/newOfferAwaiting")
-    public WebRTCOffer handleNewOffer(NewOfferObj newOfferObj) {
-//        logger.info("New offer came..... " + newOfferObj.toString());
-        String userName = newOfferObj.getUsername();
-        String offer = newOfferObj.getOffer();
-        WebRTCOffer newWebRTCOffer = new WebRTCOffer(userName, offer, new ArrayList<>(), null, null, new ArrayList<>());
-        if(offer != null && offer != "") {
-            masterWebRTCOffer = newWebRTCOffer;
+    public WebRTCOffer handleNewOffer(@Payload NewOfferObj newOfferObj) {
+        try {
+            if (newOfferObj.getRoomID() == -1 || newOfferObj.getOffer().isBlank()) {
+                logger.info("Invalid offer for room ID: {}", newOfferObj.getRoomID());
+                return null;
+            }
+            logger.info("New offer with room ID: {}", newOfferObj.getRoomID());
+            WebRTCOffer newWebRTCOffer = new WebRTCOffer(newOfferObj.getRoomID(), newOfferObj.getUsername(), newOfferObj.getOffer(), new ArrayList<>(), null, null, new ArrayList<>());
+            signallingService.saveOffer(newOfferObj.getRoomID(), newWebRTCOffer);
+            return newWebRTCOffer;
+        } catch (Exception e) {
+            logger.error("Error handling new offer for user: {}", newOfferObj.getUsername(), e);
+            throw new RuntimeException("Error handling new offer", e);
         }
-//        logger.info("master offer in new offer is: " + masterWebRTCOffer.toString());
-        return masterWebRTCOffer;
     }
 
     @MessageMapping("/newAnswer")
     @SendTo("/signal/answerResponse")
-    public WebRTCOffer handleNewAnswer(WebRTCOffer newWebRTCAnswer, SimpMessageHeaderAccessor headerAccessor) {
-//        logger.info("New answer received: " + newWebRTCAnswer.toString());
-        String userName = newWebRTCAnswer.getOffererUserName();
-//        logger.info("Found this matching webrtc offer: " + masterWebRTCOffer);
-
-        masterWebRTCOffer.setAnswer(newWebRTCAnswer.getAnswer());
-        masterWebRTCOffer.setAnswererUserName(userName);
-//        logger.info("master offer in new answer is: " + masterWebRTCOffer.toString());
-        return masterWebRTCOffer;
+    public WebRTCOffer handleNewAnswer(@Payload WebRTCOffer newWebRTCAnswer) {
+        try {
+            logger.info("New answer received");
+            if (newWebRTCAnswer == null || newWebRTCAnswer.getOffererUserName() == null) {
+                logger.info("Missing field.");
+                return null;
+            }
+            return signallingService.handleAnswer(newWebRTCAnswer);
+        } catch (Exception e) {
+            assert newWebRTCAnswer != null;
+            logger.error("Error handling new answer for offerer: {}", newWebRTCAnswer.getOffererUserName(), e);
+            throw new RuntimeException("Error handling new answer", e);
+        }
     }
 
     @MessageMapping("/sendIceCandidateToSignalingServer")
     @SendTo("/signal/receivedIceCandidateFromServer")
     public IceCandidateMessage handleIceCandidate(IceCandidateMessage iceCandidateMessage) {
-        logger.info("Got ice candidate in sendIceCandidateToSignalingServer");
-//        logger.info(iceCandidateMessage.toString());
+        try {
+            if (iceCandidateMessage.getIceCandidate().isBlank()) {
+                logger.info("Missing candidates or missing fields");
+                return null;
+            }
 
-        String currentIceUserName = iceCandidateMessage.getIceUserName();
-        String currIce = iceCandidateMessage.getIceCandidate();
-        boolean didIOffer = iceCandidateMessage.isDidIOffer();
-
-        if(didIOffer) {
-            logger.info("This ice is from offerer");
-            List<String> tempIceCandidates = masterWebRTCOffer.getOfferIceCandidates();
-            tempIceCandidates.add(currIce);
-            masterWebRTCOffer.setOfferIceCandidates(tempIceCandidates);
-        } else {
-            logger.info("This ice is from answer");
-            List<String> tempIceCandidates = masterWebRTCOffer.getAnswererIceCandidates();
-            tempIceCandidates.add(currIce);
-            masterWebRTCOffer.setAnswererIceCandidates(tempIceCandidates);
+            logger.info("Got ice candidate in handleIceCandidate");
+            return signallingService.handleIceCandidate(iceCandidateMessage);
+        } catch (Exception e) {
+            logger.error("Error handling ice candidate for room ID: {}", iceCandidateMessage.getRoomID(), e);
+            throw new RuntimeException("Error handling ice candidate", e);
         }
-
-//        logger.info("iceCandidateMessage in send ice: " + iceCandidateMessage);
-//        logger.info("master webrtc offer with ice candidates xx: " + masterWebRTCOffer.toString());
-
-        return iceCandidateMessage;
     }
 
 }

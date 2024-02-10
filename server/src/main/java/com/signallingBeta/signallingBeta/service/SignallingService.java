@@ -1,15 +1,17 @@
 package com.signallingBeta.signallingBeta.service;
 
+import com.signallingBeta.signallingBeta.dto.IceCandidateMessage;
+import com.signallingBeta.signallingBeta.dto.WebRTCOffer;
 import com.signallingBeta.signallingBeta.model.SignalingMessage;
 
 public interface SignallingService {
 
-    SignalingMessage saveOffer(String offer);
+    void saveOffer(int roomID, WebRTCOffer webRTCOffer);
 
-    SignalingMessage getOffer(int sessionStorageId);
+    WebRTCOffer getOffer(int sessionStorageId);
 
-    SignalingMessage saveAnswer(SignalingMessage signalingMessage);
+    WebRTCOffer handleAnswer(WebRTCOffer newWebRTCAnswer);
 
-    SignalingMessage getAnswer(int sessionStorageId);
+    public IceCandidateMessage handleIceCandidate(IceCandidateMessage iceCandidateMessage);
 
 }
