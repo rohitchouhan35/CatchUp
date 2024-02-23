@@ -2,17 +2,21 @@ import React, { useEffect, useRef, useState } from "react";
 import StompConnection from "../config/Config.jsx";
 import Utilities from "../utilities/Utilities.jsx";
 import { useVideoChat } from "../contexts/VideoChatContext.jsx";
+import useVideoFrameSender from "../hooks/VideoFrameSender.jsx";
+import { useGlobalVariable } from "../contexts/GlobalVariable.jsx";
 import Avatars from "./Avatars";
 import { FaCopy } from "react-icons/fa";
 import CopyText from "./CopyText";
 import "../styles/Lobby.css";
 
-const UserView = ({ copyMessage, userID }) => {
+const UserView = ({ roomID }) => {
   const users = [
     { id: 1, username: "Rohit Chouhan" },
     { id: 2, username: "Siddharth Gohil" },
   ];
 
+  // const { domainName } = useGlobalVariable();
+  const domainName = "localhost";
   const { isMuted, isLive } = useVideoChat();
   const localVideoRef = useRef(null);
   const remoteVideoEl = useRef(null);
@@ -33,7 +37,7 @@ const UserView = ({ copyMessage, userID }) => {
       // "wss://catchup-media-server.onrender.com/meet",
       // "wss://catchup-media-server-test.onrender.com/meet",
       // "wss://catchup-media-server-beta.onrender.com/meet",
-      "ws://localhost:8080/meet",
+      `ws://${domainName}:8080/meet`,
       handleStompConnect
     );
     setStompConnection(connection);
@@ -59,22 +63,23 @@ const UserView = ({ copyMessage, userID }) => {
   function subscriptionHandler() {
     // stompConnection.subscribe("/signal/newAnswer", onNewAnswer);
     // stompConnection.subscribe("/signal/newIceCandidate", onNewIceCandidate);
-    stompConnection.subscribe("/signal/availableOffers", onAvailableOffers);
-    stompConnection.subscribe("/signal/newOfferAwaiting", onNewOfferAwaiting);
-    stompConnection.subscribe("/signal/answerResponse", onAnswerResponse);
+    stompConnection.subscribe(`/signal/${roomID}/privateOffer`, onAvailableOffers);
+    stompConnection.subscribe(`/signal/${roomID}/newOfferAwaiting`, onNewOfferAwaiting);
+    stompConnection.subscribe(`/signal/${roomID}/answerResponse`, onAnswerResponse);
     stompConnection.subscribe(
-      "/signal/addIceCandidateFromOfferer",
+      `/signal/${roomID}/addIceCandidateFromOfferer`,
       OnaddIceCandidateFromOfferer
     );
     stompConnection.subscribe(
-      "/signal/receivedIceCandidateFromServer",
+      `/signal/${roomID}/receivedIceCandidateFromServer`,
       onReceivedIceCandidateFromServer
     );
 
     const userRequestData = {
-      roomID: copyMessage,
+      roomID: roomID.toString(),
       username: username
     }
+    console.log("sending our username and roomID: ", userRequestData);
     stompConnection.publish("/app/signal", JSON.stringify(userRequestData));
     // if (shouldStartCall) {
     //   call();
@@ -114,7 +119,7 @@ const UserView = ({ copyMessage, userID }) => {
       peerConnection.setLocalDescription(offer);
       didIOffer = true;
       const newOfferObj = {
-        roomID: copyMessage,
+        roomID: roomID.toString(),
         username: username,
         offer: JSON.stringify(offer),
       };
@@ -152,7 +157,8 @@ const UserView = ({ copyMessage, userID }) => {
   };
 
   const addAnswer = async (offerObj) => {
-    console.log("peerconnection: ", peerConnection);
+    // console.log("peerconnection: ", peerConnection);
+    // console.log("offerObj: ", offerObj.answer);
     const answer = JSON.parse(offerObj.answer);
     await peerConnection.setRemoteDescription(answer);
   };
@@ -219,7 +225,7 @@ const UserView = ({ copyMessage, userID }) => {
             iceCandidate: JSON.stringify(e.candidate),
             iceUserName: username,
             didIOffer,
-            roomID: copyMessage,
+            roomID: roomID.toString(),
           };
           stompConnection.publish(
             "/app/sendIceCandidateToSignalingServer",
@@ -246,6 +252,7 @@ const UserView = ({ copyMessage, userID }) => {
 
   const onAvailableOffers = (offers) => {
     offers = JSON.parse(offers.body);
+    console.log("got answer button from: ", offers);
     createOfferEls(offers);
   };
   function createOfferEls(offers) {
@@ -275,7 +282,8 @@ const UserView = ({ copyMessage, userID }) => {
   };
   const onAnswerResponse = (offerObj) => {
     offerObj = JSON.parse(offerObj.body);
-    addAnswer(offerObj);
+    // console.log("got xxx answer response: ", offerObj);
+    if(offerObj.answer != null) addAnswer(offerObj);
   };
   const onReceivedIceCandidateFromServer = (iceCandidateMessage) => {
     iceCandidateMessage = JSON.parse(iceCandidateMessage.body);
@@ -321,47 +329,12 @@ const UserView = ({ copyMessage, userID }) => {
     }
   }, [isLive, isMuted, localStream]);
 
-  let lastFrameTime = 0;
-  const targetFrameRate = 8;
-
-  const captureAndSendVideoFrame = () => {
-    const currentTime = performance.now();
-    const timeSinceLastFrame = currentTime - lastFrameTime;
-    const scaleFactor = 0.3;
-
-    try {
-
-      if (timeSinceLastFrame >= 1000 / targetFrameRate) {
-        const canvas = document.createElement("canvas");
-        canvas.width = localVideoRef.current.videoWidth * scaleFactor;
-        canvas.height = localVideoRef.current.videoHeight * scaleFactor;
-        const context = canvas.getContext("2d");
-        context.drawImage(localVideoRef.current, 0, 0, canvas.width, canvas.height);
-        const videoFrame = canvas.toDataURL("image/webp").split(",")[1];
-        // const localVideDataObj = {
-        //   "userID": userID,
-        //   "payload": videoFrame,
-        // }
-
-        stompConnection.publish("/app/live-video", videoFrame);
-
-        lastFrameTime = currentTime;
-      }
-
-    } catch (e) {
-      console.error(e);
-    }
-
-    // requestAnimationFrame(captureAndSendVideoFrame);
-  };
-
-  // Start capturing frames
-  // captureAndSendVideoFrame();
+  const captureAndSendVideoFrame = useVideoFrameSender(localVideoRef, stompConnection);
 
   return (
     <>
       <div className="user-view">
-        <CopyText copyMessage={copyMessage} />
+        <CopyText copyMessage={roomID} />
         <div className="video-container">
           <video
             className="user-card"

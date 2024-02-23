@@ -3,9 +3,12 @@ import StompConnection from "../config/Config.jsx";
 import Lobby from "../components/Lobby.jsx";
 import Utilities from "../utilities/Utilities";
 import ConnectingPageComponent from "../components/ConnectingPageComponent";
+import { useGlobalVariable } from "../contexts/GlobalVariable.jsx";
 import "../styles/Catchup.css";
 
 const Catchup = () => {
+  // const { domainName } = useGlobalVariable();
+  const domainName = "localhost";
   const [subscriptions, setSubscriptions] = useState([]);
   const [stompConnection, setStompConnection] = useState(null);
   const [subscribeFlag, setSubscribeFlag] = useState(false);
@@ -16,9 +19,6 @@ const Catchup = () => {
   const [launchRoom, setLaunchRoom] = useState(false);
 
   useEffect(() => {
-    // const userUUID = Utilities.getUniqueID();
-    // setUserID(userUUID);
-    // console.log(userUUID);
     
     const fetchUserId = async () => {
       try {
@@ -37,7 +37,7 @@ const Catchup = () => {
     const connection = new StompConnection(
       // "wss://catchup-media-server.onrender.com/meet",
       // "wss://catchup-media-server-beta.onrender.com/meet",
-      "ws://localhost:8080/meet",
+      `ws://${domainName}:8080/meet`,
       handleStompConnect
     );
     setStompConnection(connection);

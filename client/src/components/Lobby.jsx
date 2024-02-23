@@ -11,19 +11,19 @@ import "../styles/Lobby.css";
 
 const Lobby = ({ remoteRoomID, userID }) => {
   const [isChatSectionOpen, setIsChatSectionOpen] = useState(false);
-  const [lobbyID, setLobbyID] = useState(null);
+  const [roomID, setRoomID] = useState(null);
 
   useEffect(() => {
     const fetchLobbyId = async () => {
       try {
         // debugger;
-        if (!remoteRoomID && !lobbyID) {
+        if (!remoteRoomID && !roomID) {
           console.log("remote room ID is: ", remoteRoomID);
-          const randomUUID = await Utilities.getUniqueID();
-          setLobbyID(randomUUID);
+          const newRoomID = await Utilities.getUniqueID();
+          setRoomID(newRoomID);
         } else {
           console.log("You are joinig some room");
-          setLobbyID(remoteRoomID);
+          setRoomID(remoteRoomID);
         }
       } catch (error) {
         console.error("Error initializing Stomp connection:", error);
@@ -43,8 +43,8 @@ const Lobby = ({ remoteRoomID, userID }) => {
         <div className="lobby">
           <div className="lobby-container">
           <NotificationBox message="You joined the room!" timeInSeconds={3} position="top-right"/>
-            <UserView copyMessage={lobbyID} userID={userID} />
-            <ChatBox chatSessionID={lobbyID} userID={userID} />
+            <UserView roomID={roomID} />
+            <ChatBox chatSessionID={roomID} userID={userID} />
           </div>
           <ControlsView handleChatButtonClick={handleChatButtonClick} />
 
